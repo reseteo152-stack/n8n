@@ -264,6 +264,7 @@ export function createChatHubModuleSettings(
 				enabled: true,
 			},
 		},
+		memory: '',
 		...overrides,
 	};
 }
