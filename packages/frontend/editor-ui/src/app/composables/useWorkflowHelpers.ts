@@ -602,7 +602,7 @@ export function useWorkflowHelpers() {
 			nodes,
 			pinData: workflowDocumentStore?.getPinDataSnapshot() ?? {},
 			connections: workflowConnections,
-			active: useWorkflowDocumentStore(createWorkflowDocumentId(workflowsStore.workflowId)).active,
+			active: workflowDocumentStore?.active ?? false,
 			settings: workflowsStore.workflow.settings,
 			tags,
 			versionId: workflowsStore.workflow.versionId,
