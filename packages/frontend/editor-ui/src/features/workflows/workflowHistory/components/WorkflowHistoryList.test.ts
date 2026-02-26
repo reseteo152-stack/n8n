@@ -172,6 +172,7 @@ describe('WorkflowHistoryList', () => {
 				lastReceivedItemsLength: 20,
 				evaluatedPruneTimeInHours: -1,
 				activeVersionId,
+				isWorkflowDiffsEnabled: true,
 			},
 		});
 
@@ -193,6 +194,7 @@ describe('WorkflowHistoryList', () => {
 				requestNumberOfItems: 20,
 				lastReceivedItemsLength: 20,
 				evaluatedPruneTimeInHours: -1,
+				isWorkflowDiffsEnabled: true,
 			},
 		});
 
@@ -216,6 +218,7 @@ describe('WorkflowHistoryList', () => {
 				requestNumberOfItems: 20,
 				lastReceivedItemsLength: 20,
 				evaluatedPruneTimeInHours: -1,
+				isWorkflowDiffsEnabled: true,
 			},
 		});
 
