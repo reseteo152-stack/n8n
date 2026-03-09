@@ -1,33 +1,32 @@
-import { IExecuteFunctions } from 'n8n-core';
+import type {
+	IExecuteFunctions,
+	IDataObject,
+	ILoadOptionsFunctions,
+	JsonObject,
+	IRequestOptions,
+	IHttpRequestMethods,
+} from 'n8n-workflow';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
-import { IDataObject, ILoadOptionsFunctions, NodeApiError, NodeOperationError } from 'n8n-workflow';
+import type { Connector, ElasticSecurityApiCredentials } from './types';
 
-import { OptionsWithUri } from 'request';
-
-import { Connector, ElasticSecurityApiCredentials } from './types';
+export function tolerateTrailingSlash(baseUrl: string) {
+	return baseUrl.endsWith('/') ? baseUrl.substr(0, baseUrl.length - 1) : baseUrl;
+}
 
 export async function elasticSecurityApiRequest(
 	this: IExecuteFunctions | ILoadOptionsFunctions,
-	method: string,
+	method: IHttpRequestMethods,
 	endpoint: string,
 	body: IDataObject = {},
 	qs: IDataObject = {},
 ) {
-	const {
-		username,
-		password,
-		baseUrl: rawBaseUrl,
-	} = (await this.getCredentials('elasticSecurityApi')) as ElasticSecurityApiCredentials;
+	const { baseUrl: rawBaseUrl } =
+		await this.getCredentials<ElasticSecurityApiCredentials>('elasticSecurityApi');
 
 	const baseUrl = tolerateTrailingSlash(rawBaseUrl);
 
-	const token = Buffer.from(`${username}:${password}`).toString('base64');
-
-	const options: OptionsWithUri = {
-		headers: {
-			Authorization: `Basic ${token}`,
-			'kbn-xsrf': true,
-		},
+	const options: IRequestOptions = {
 		method,
 		body,
 		qs,
@@ -44,36 +43,36 @@ export async function elasticSecurityApiRequest(
 	}
 
 	try {
-		return await this.helpers.request!(options);
+		return await this.helpers.requestWithAuthentication.call(this, 'elasticSecurityApi', options);
 	} catch (error) {
 		if (error?.error?.error === 'Not Acceptable' && error?.error?.message) {
 			error.error.error = `${error.error.error}: ${error.error.message}`;
 		}
 
-		throw new NodeApiError(this.getNode(), error);
+		throw new NodeApiError(this.getNode(), error as JsonObject);
 	}
 }
 
 export async function elasticSecurityApiRequestAllItems(
 	this: IExecuteFunctions,
-	method: string,
+	method: IHttpRequestMethods,
 	endpoint: string,
 	body: IDataObject = {},
 	qs: IDataObject = {},
 ) {
-	let page = 1;
+	let _page = 1;
 	const returnData: IDataObject[] = [];
-	let responseData: any; // tslint:disable-line
+	let responseData: any;
 
 	const resource = this.getNodeParameter('resource', 0) as 'case' | 'caseComment';
 
 	do {
 		responseData = await elasticSecurityApiRequest.call(this, method, endpoint, body, qs);
-		page++;
+		_page++;
 
 		const items = resource === 'case' ? responseData.cases : responseData;
 
-		returnData.push(...items);
+		returnData.push(...(items as IDataObject[]));
 	} while (returnData.length < responseData.total);
 
 	return returnData;
@@ -81,12 +80,12 @@ export async function elasticSecurityApiRequestAllItems(
 
 export async function handleListing(
 	this: IExecuteFunctions,
-	method: string,
+	method: IHttpRequestMethods,
 	endpoint: string,
 	body: IDataObject = {},
 	qs: IDataObject = {},
 ) {
-	const returnAll = this.getNodeParameter('returnAll', 0) as boolean;
+	const returnAll = this.getNodeParameter('returnAll', 0);
 
 	if (returnAll) {
 		return await elasticSecurityApiRequestAllItems.call(this, method, endpoint, body, qs);
@@ -99,7 +98,7 @@ export async function handleListing(
 		body,
 		qs,
 	);
-	const limit = this.getNodeParameter('limit', 0) as number;
+	const limit = this.getNodeParameter('limit', 0);
 
 	return responseData.slice(0, limit);
 }
@@ -137,8 +136,4 @@ export async function getVersion(this: IExecuteFunctions, endpoint: string) {
 	}
 
 	return version;
-}
-
-export function tolerateTrailingSlash(baseUrl: string) {
-	return baseUrl.endsWith('/') ? baseUrl.substr(0, baseUrl.length - 1) : baseUrl;
 }

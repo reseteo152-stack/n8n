@@ -1,33 +1,36 @@
-import {
-	OptionsWithUri
-} from 'request';
-
-import {
+import type {
+	IDataObject,
 	IExecuteFunctions,
-	IExecuteSingleFunctions,
 	IHookFunctions,
+	IHttpRequestMethods,
 	ILoadOptionsFunctions,
+	IRequestOptions,
 	IWebhookFunctions,
-} from 'n8n-core';
-
-import {
-	IDataObject, NodeApiError,
+	JsonObject,
 } from 'n8n-workflow';
+import { NodeApiError } from 'n8n-workflow';
 
-export async function sentryIoApiRequest(this: IHookFunctions | IExecuteFunctions | IExecuteSingleFunctions | ILoadOptionsFunctions | IWebhookFunctions, method: string, resource: string, body: any = {}, qs: IDataObject = {}, uri?: string, option: IDataObject = {}): Promise<any> { // tslint:disable-line:no-any
+export async function sentryIoApiRequest(
+	this: IHookFunctions | IExecuteFunctions | ILoadOptionsFunctions | IWebhookFunctions,
+	method: IHttpRequestMethods,
+	resource: string,
+
+	body: any = {},
+	qs: IDataObject = {},
+	uri?: string,
+	option: IDataObject = {},
+): Promise<any> {
 	const authentication = this.getNodeParameter('authentication', 0);
 
-	const version = this.getNodeParameter('sentryVersion', 0);
-
-	const options: OptionsWithUri = {
+	const options = {
 		headers: {},
 		method,
 		qs,
 		body,
 		uri: uri || `https://sentry.io${resource}`,
 		json: true,
-	};
-	if (!Object.keys(body).length) {
+	} satisfies IRequestOptions;
+	if (!Object.keys(body as IDataObject).length) {
 		delete options.body;
 	}
 
@@ -42,60 +45,30 @@ export async function sentryIoApiRequest(this: IHookFunctions | IExecuteFunction
 	let credentialName;
 
 	try {
+		if (authentication === 'oAuth2') {
+			return await this.helpers.requestOAuth2.call(this, 'sentryIoOAuth2Api', options);
+		}
+
 		if (authentication === 'accessToken') {
-
-			if (version === 'cloud') {
-				credentialName = 'sentryIoApi';
-			} else {
-				credentialName = 'sentryIoServerApi';
-			}
-
-			const credentials = await this.getCredentials(credentialName);
-
-			if (credentials.url) {
-				options.uri = `${credentials?.url}${resource}`;
-			}
-
-			options.headers = {
-				Authorization: `Bearer ${credentials?.token}`,
-			};
-
-			//@ts-ignore
-			return this.helpers.request(options);
-
+			credentialName = 'sentryIoApi';
 		} else {
-
-			return await this.helpers.requestOAuth2!.call(this, 'sentryIoOAuth2Api', options);
+			credentialName = 'sentryIoServerApi';
 		}
 
+		const credentials = await this.getCredentials(credentialName);
+
+		if (credentials.url) {
+			options.uri = `${credentials?.url}${resource}`;
+		}
+
+		options.headers = {
+			Authorization: `Bearer ${credentials?.token}`,
+		};
+
+		return await this.helpers.request(options);
 	} catch (error) {
-		throw new NodeApiError(this.getNode(), error);
+		throw new NodeApiError(this.getNode(), error as JsonObject);
 	}
-}
-
-export async function sentryApiRequestAllItems(this: IHookFunctions | IExecuteFunctions | ILoadOptionsFunctions, method: string, resource: string, body: any = {}, query: IDataObject = {}): Promise<any> { // tslint:disable-line:no-any
-
-	const returnData: IDataObject[] = [];
-
-	let responseData;
-
-	let link;
-
-	let uri: string | undefined;
-
-	do {
-		responseData = await sentryIoApiRequest.call(this, method, resource, body, query, uri, { resolveWithFullResponse: true });
-		link = responseData.headers.link;
-		uri = getNext(link);
-		returnData.push.apply(returnData, responseData.body);
-		if (query.limit && (query.limit >= returnData.length)) {
-			return;
-		}
-	} while (
-		hasMore(link)
-	);
-
-	return returnData;
 }
 
 function getNext(link: string) {
@@ -116,4 +89,36 @@ function hasMore(link: string) {
 	if (next.includes('rel="next"')) {
 		return next.includes('results="true"');
 	}
+}
+
+export async function sentryApiRequestAllItems(
+	this: IHookFunctions | IExecuteFunctions | ILoadOptionsFunctions,
+	method: IHttpRequestMethods,
+	resource: string,
+
+	body: any = {},
+	query: IDataObject = {},
+): Promise<any> {
+	const returnData: IDataObject[] = [];
+
+	let responseData;
+
+	let link;
+
+	let uri: string | undefined;
+
+	do {
+		responseData = await sentryIoApiRequest.call(this, method, resource, body, query, uri, {
+			resolveWithFullResponse: true,
+		});
+		link = responseData.headers.link;
+		uri = getNext(link as string);
+		returnData.push.apply(returnData, responseData.body as IDataObject[]);
+		const limit = query.limit as number | undefined;
+		if (limit && limit >= returnData.length) {
+			return;
+		}
+	} while (hasMore(link as string));
+
+	return returnData;
 }

@@ -3,17 +3,21 @@ export interface IHourlyRateDto {
 	currency: string;
 }
 
-enum MembershipStatusEnum {
-	PENDING = 'PENDING',
-	ACTIVE = 'ACTIVE',
-	DECLINED = 'DECLINED',
-	INACTIVE = 'INACTIVE',
-}
+const MembershipStatuses = {
+	PENDING: 'PENDING',
+	ACTIVE: 'ACTIVE',
+	DECLINED: 'DECLINED',
+	INACTIVE: 'INACTIVE',
+} as const;
 
-enum TaskStatusEnum {
-	ACTIVE = 'ACTIVE',
-	DONE = 'DONE',
-}
+type MembershipStatusEnum = (typeof MembershipStatuses)[keyof typeof MembershipStatuses];
+
+const TaskStatuses = {
+	ACTIVE: 'ACTIVE',
+	DONE: 'DONE',
+} as const;
+
+type TaskStatusEnum = (typeof TaskStatuses)[keyof typeof TaskStatuses];
 
 export interface IMembershipDto {
 	hourlyRate: IHourlyRateDto;
@@ -25,7 +29,7 @@ export interface IMembershipDto {
 
 export interface ITagDto {
 	id: string;
-	name: any; // tslint:disable-line:no-any
+	name: any;
 	workspaceId: string;
 	archived: boolean;
 }
@@ -34,7 +38,7 @@ export interface ITaskDto {
 	assigneeIds: object;
 	estimate: string;
 	id: string;
-	name: any; // tslint:disable-line:no-any
+	name: any;
 	workspaceId: string;
 	projectId: string;
 	'is-active': boolean;

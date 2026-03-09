@@ -1,14 +1,14 @@
-import { IExecuteFunctions } from 'n8n-core';
-
 import {
-	ICredentialDataDecryptedObject,
-	ICredentialsDecrypted,
-	ICredentialTestFunctions,
-	IDataObject,
-	INodeCredentialTestResult,
-	INodeExecutionData,
-	INodeType,
-	INodeTypeDescription,
+	type IExecuteFunctions,
+	type ICredentialDataDecryptedObject,
+	type ICredentialsDecrypted,
+	type ICredentialTestFunctions,
+	type IDataObject,
+	type INodeCredentialTestResult,
+	type INodeExecutionData,
+	type INodeType,
+	type INodeTypeDescription,
+	NodeConnectionTypes,
 } from 'n8n-workflow';
 
 import { dhlApiRequest, validateCredentials } from './GenericFunctions';
@@ -25,8 +25,9 @@ export class Dhl implements INodeType {
 		defaults: {
 			name: 'DHL',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		usableAsTool: true,
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'dhlApi',
@@ -78,11 +79,11 @@ export class Dhl implements INodeType {
 				displayName: 'Options',
 				name: 'options',
 				type: 'collection',
-				placeholder: 'Add Option',
+				placeholder: 'Add option',
 				default: {},
 				options: [
 					{
-						displayName: `Recipient's Postal Code`,
+						displayName: "Recipient's Postal Code",
 						name: 'recipientPostalCode',
 						type: 'string',
 						default: '',
@@ -124,15 +125,15 @@ export class Dhl implements INodeType {
 		const returnData: IDataObject[] = [];
 		let qs: IDataObject = {};
 		let responseData;
-		const resource = this.getNodeParameter('resource', 0) as string;
-		const operation = this.getNodeParameter('operation', 0) as string;
+		const resource = this.getNodeParameter('resource', 0);
+		const operation = this.getNodeParameter('operation', 0);
 
 		for (let i = 0; i < items.length; i++) {
 			try {
 				if (resource === 'shipment') {
 					if (operation === 'get') {
 						const trackingNumber = this.getNodeParameter('trackingNumber', i) as string;
-						const options = this.getNodeParameter('options', i) as IDataObject;
+						const options = this.getNodeParameter('options', i);
 
 						qs = {
 							trackingNumber,
@@ -140,9 +141,9 @@ export class Dhl implements INodeType {
 
 						Object.assign(qs, options);
 
-						responseData = await dhlApiRequest.call(this, 'GET', `/track/shipments`, {}, qs);
+						responseData = await dhlApiRequest.call(this, 'GET', '/track/shipments', {}, qs);
 
-						returnData.push(...responseData.shipments);
+						returnData.push(...(responseData.shipments as IDataObject[]));
 					}
 				}
 			} catch (error) {

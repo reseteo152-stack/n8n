@@ -1,47 +1,29 @@
 /* eslint-disable n8n-nodes-base/node-filename-against-convention */
-import {
-	databaseFields,
-	databaseOperations,
-} from '../DatabaseDescription';
+import { NodeConnectionTypes, type INodeTypeDescription } from 'n8n-workflow';
 
-import {
-	userFields,
-	userOperations,
-} from '../UserDescription';
-
-import {
-	pageFields,
-	pageOperations,
-} from '../PageDescription';
-
-import {
-	blockFields,
-	blockOperations,
-} from '../BlockDescription';
-
+import { blockFields, blockOperations } from '../shared/descriptions/BlockDescription';
+import { databaseFields, databaseOperations } from '../shared/descriptions/DatabaseDescription';
 import {
 	databasePageFields,
 	databasePageOperations,
-} from '../DatabasePageDescription';
-
-import {
-	INodeTypeDescription,
-} from 'n8n-workflow';
+} from '../shared/descriptions/DatabasePageDescription';
+import { pageFields, pageOperations } from '../shared/descriptions/PageDescription';
+import { userFields, userOperations } from '../shared/descriptions/UserDescription';
 
 export const versionDescription: INodeTypeDescription = {
-	displayName: 'Notion (Beta)',
+	displayName: 'Notion',
 	name: 'notion',
-	icon: 'file:notion.svg',
+	icon: { light: 'file:notion.svg', dark: 'file:notion.dark.svg' },
 	group: ['output'],
-	version: 2,
+	version: [2, 2.1, 2.2],
 	subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-	description: 'Consume Notion API (Beta)',
+	description: 'Consume Notion API',
 	defaults: {
 		name: 'Notion',
-		color: '#000000',
 	},
-	inputs: ['main'],
-	outputs: ['main'],
+	inputs: [NodeConnectionTypes.Main],
+	outputs: [NodeConnectionTypes.Main],
+	usableAsTool: true,
 	credentials: [
 		{
 			name: 'notionApi',
@@ -85,16 +67,17 @@ export const versionDescription: INodeTypeDescription = {
 		// 	description: 'The resource to operate on.',
 		// },
 		{
-			displayName: 'To access content, make sure it\'s shared with your integration in Notion',
+			displayName:
+				'In Notion, make sure to <a href="https://www.notion.so/help/add-and-manage-connections-with-the-api" target="_blank">add your connection</a> to the pages you want to access.',
 			name: 'notionNotice',
 			type: 'notice',
 			default: '',
 		},
 		{
-			displayName: 'Version',
-			name: 'version',
-			type: 'hidden',
-			default: 2,
+			displayName: '',
+			name: 'Credentials',
+			type: 'credentials',
+			default: '',
 		},
 		{
 			displayName: 'Resource',

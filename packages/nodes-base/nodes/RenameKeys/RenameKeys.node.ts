@@ -1,18 +1,14 @@
-import { IExecuteFunctions } from 'n8n-core';
-import {
+import get from 'lodash/get';
+import set from 'lodash/set';
+import unset from 'lodash/unset';
+import { NodeConnectionTypes, deepCopy } from 'n8n-workflow';
+import type {
+	IExecuteFunctions,
 	IDataObject,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-
-import {
-	get,
-	set,
-	unset,
-} from 'lodash';
-import { options } from 'rhea';
-
 interface IRenameKey {
 	currentKey: string;
 	newKey: string;
@@ -23,15 +19,16 @@ export class RenameKeys implements INodeType {
 		displayName: 'Rename Keys',
 		name: 'renameKeys',
 		icon: 'fa:edit',
+		iconColor: 'crimson',
 		group: ['transform'],
 		version: 1,
-		description: 'Renames keys',
+		description: 'Update item field names',
 		defaults: {
 			name: 'Rename Keys',
 			color: '#772244',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		properties: [
 			{
 				displayName: 'Keys',
@@ -55,7 +52,9 @@ export class RenameKeys implements INodeType {
 								type: 'string',
 								default: '',
 								placeholder: 'currentKey',
-								description: 'The current name of the key. It is also possible to define deep keys by using dot-notation like for example: "level1.level2.currentKey".',
+								requiresDataPath: 'single',
+								description:
+									'The current name of the key. It is also possible to define deep keys by using dot-notation like for example: "level1.level2.currentKey".',
 							},
 							{
 								displayName: 'New Key Name',
@@ -63,7 +62,8 @@ export class RenameKeys implements INodeType {
 								type: 'string',
 								default: '',
 								placeholder: 'newKey',
-								description: 'The name the key should be renamed to. It is also possible to define deep keys by using dot-notation like for example: "level1.level2.newKey".',
+								description:
+									'The name the key should be renamed to. It is also possible to define deep keys by using dot-notation like for example: "level1.level2.newKey".',
 							},
 						],
 					},
@@ -74,13 +74,13 @@ export class RenameKeys implements INodeType {
 				name: 'additionalOptions',
 				type: 'collection',
 				default: {},
-				placeholder: 'Add Option',
+				placeholder: 'Add option',
 				options: [
 					{
 						displayName: 'Regex',
 						name: 'regexReplacement',
 						placeholder: 'Add new regular expression',
-						description: 'Adds a regular expressiond',
+						description: 'Adds a regular expression',
 						type: 'fixedCollection',
 						typeOptions: {
 							multipleValues: true,
@@ -93,7 +93,8 @@ export class RenameKeys implements INodeType {
 								name: 'replacements',
 								values: [
 									{
-										displayName: 'Be aware that by using regular expression previously renamed keys can be affected',
+										displayName:
+											'Be aware that by using regular expression previously renamed keys can be affected',
 										name: 'regExNotice',
 										type: 'notice',
 										default: '',
@@ -113,7 +114,8 @@ export class RenameKeys implements INodeType {
 										type: 'string',
 										default: '',
 										placeholder: 'replacedName',
-										description: 'The name the key/s should be renamed to. It\'s possible to use regex captures e.g. $1, $2, ...',
+										description:
+											"The name the key/s should be renamed to. It's possible to use regex captures e.g. $1, $2, ...",
 									},
 									{
 										displayName: 'Options',
@@ -146,88 +148,115 @@ export class RenameKeys implements INodeType {
 				],
 			},
 		],
+		hints: [
+			{
+				type: 'warning',
+				message:
+					'Complex regex patterns like nested quantifiers .*+, ()*+, or multiple wildcards may cause performance issues. Consider using simpler patterns like [a-z]+ or \\w+ for better performance.',
+				displayCondition:
+					'={{ $parameter.additionalOptions.regexReplacement.replacements && $parameter.additionalOptions.regexReplacement.replacements.some(r => r.searchRegex && /(\\.\\*\\+|\\)\\*\\+|\\+\\*|\\*.*\\*|\\+.*\\+|\\?.*\\?|\\{[0-9]+,\\}|\\*{2,}|\\+{2,}|\\?{2,}|[a-zA-Z0-9]{4,}[\\*\\+]|\\([^)]*\\|[^)]*\\)[\\*\\+])/.test(r.searchRegex)) }}',
+				whenToDisplay: 'always',
+				location: 'outputPane',
+			},
+		],
 	};
 
-
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-
 		const items = this.getInputData();
-
 		const returnData: INodeExecutionData[] = [];
 
 		let item: INodeExecutionData;
 		let newItem: INodeExecutionData;
 		let renameKeys: IRenameKey[];
-		let value: any; // tslint:disable-line:no-any
+		let value: any;
 
-		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
-			renameKeys = this.getNodeParameter('keys.key', itemIndex, []) as IRenameKey[];
-			const regexReplacements = this.getNodeParameter('additionalOptions.regexReplacement.replacements', itemIndex, []) as IDataObject[];
-
-			item = items[itemIndex];
-
-			// Copy the whole JSON data as data on any level can be renamed
-			newItem = {
-				json: JSON.parse(JSON.stringify(item.json)),
-				pairedItem: {
-					item: itemIndex,
-				},
-			};
-
-			if (item.binary !== undefined) {
-				// Reference binary data if any exists. We can reference it
-				// as this nodes does not change it
-				newItem.binary = item.binary;
+		const renameKey = (key: IRenameKey) => {
+			if (key.currentKey === '' || key.newKey === '' || key.currentKey === key.newKey) {
+				// Ignore all which do not have all the values set or if the new key is equal to the current key
+				return;
 			}
+			value = get(item.json, key.currentKey);
+			if (value === undefined) {
+				return;
+			}
+			set(newItem.json, key.newKey, value);
 
-			renameKeys.forEach((renameKey) => {
-				if (renameKey.currentKey === '' || renameKey.newKey === '' || renameKey.currentKey === renameKey.newKey) {
-					// Ignore all which do not have all the values set or if the new key is equal to the current key
-					return;
-				}
-				value = get(item.json, renameKey.currentKey as string);
-				if (value === undefined) {
-					return;
-				}
-				set(newItem.json, renameKey.newKey, value);
+			unset(newItem.json, key.currentKey);
+		};
 
-				unset(newItem.json, renameKey.currentKey as string);
-			});
+		const regexReplaceKey = (replacement: IDataObject) => {
+			const { searchRegex, replaceRegex, options } = replacement;
+			const { depth, caseInsensitive } = options as IDataObject;
 
-			regexReplacements.forEach(replacement => {
-				const { searchRegex, replaceRegex, options } = replacement;
-				const {depth, caseInsensitive} = options as IDataObject;
+			const flags = (caseInsensitive as boolean) ? 'i' : undefined;
 
-				const flags = (caseInsensitive as boolean) ?  'i' : undefined;
+			const regex = new RegExp(searchRegex as string, flags);
 
-				const regex = new RegExp(searchRegex as string, flags);
-
-				const renameObjectKeys = (obj: IDataObject, depth: number) => {
-					for (const key in obj) {
-						if (Array.isArray(obj)) {
-							// Don't rename array object references
-							if (depth !== 0) {
-								renameObjectKeys(obj[key] as IDataObject, depth - 1);
-							}
-						} else if (obj.hasOwnProperty(key)) {
-							if (typeof obj[key] === 'object' && depth !== 0) {
-								renameObjectKeys(obj[key] as IDataObject, depth - 1);
-							}
-							if (key.match(regex)) {
-								const newKey = key.replace(regex, replaceRegex as string);
-								if (newKey !== key) {
-									obj[newKey] = obj[key];
-									delete obj[key];
-								}
+			const renameObjectKeys = (obj: IDataObject, objDepth: number) => {
+				for (const key in obj) {
+					if (Array.isArray(obj)) {
+						// Don't rename array object references
+						if (objDepth !== 0) {
+							renameObjectKeys(obj[key] as IDataObject, objDepth - 1);
+						}
+					} else if (obj.hasOwnProperty(key)) {
+						if (typeof obj[key] === 'object' && objDepth !== 0) {
+							renameObjectKeys(obj[key] as IDataObject, objDepth - 1);
+						}
+						if (key.match(regex)) {
+							const newKey = key.replace(regex, replaceRegex as string);
+							if (newKey !== key) {
+								obj[newKey] = obj[key];
+								delete obj[key];
 							}
 						}
 					}
-					return obj;
-				};
-				newItem.json = renameObjectKeys(newItem.json, depth as number);
-			});
+				}
+				return obj;
+			};
+			newItem.json = renameObjectKeys(newItem.json, depth as number);
+		};
+		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
+			try {
+				renameKeys = this.getNodeParameter('keys.key', itemIndex, []) as IRenameKey[];
+				const regexReplacements = this.getNodeParameter(
+					'additionalOptions.regexReplacement.replacements',
+					itemIndex,
+					[],
+				) as IDataObject[];
 
-			returnData.push(newItem);
+				item = items[itemIndex];
+
+				// Copy the whole JSON data as data on any level can be renamed
+				newItem = {
+					json: deepCopy(item.json),
+					pairedItem: {
+						item: itemIndex,
+					},
+				};
+
+				if (item.binary !== undefined) {
+					// Reference binary data if any exists. We can reference it
+					// as this nodes does not change it
+					newItem.binary = item.binary;
+				}
+
+				renameKeys.forEach(renameKey);
+
+				regexReplacements.forEach(regexReplaceKey);
+
+				returnData.push(newItem);
+			} catch (error) {
+				if (this.continueOnFail()) {
+					const executionErrorData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray({ error: error.message }),
+						{ itemData: { item: itemIndex } },
+					);
+					returnData.push(...executionErrorData);
+					continue;
+				}
+				throw error;
+			}
 		}
 
 		return [returnData];

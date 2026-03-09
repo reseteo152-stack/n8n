@@ -1,17 +1,34 @@
-import {
-	INodeProperties,
-} from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
+
+export const ALLOWED_CONFIG_KEYS = ['user.email', 'user.name', 'remote.origin.url'];
 
 export const addConfigFields: INodeProperties[] = [
+	{
+		displayName: 'Key',
+		name: 'key',
+		type: 'options',
+		displayOptions: {
+			show: {
+				operation: ['addConfig'],
+				'@version': [{ _cnd: { gte: 1.1 } }],
+			},
+		},
+		options: ALLOWED_CONFIG_KEYS.map((key) => ({
+			name: key,
+			value: key,
+		})),
+		default: '',
+		description: 'Name of the key to set',
+		required: true,
+	},
 	{
 		displayName: 'Key',
 		name: 'key',
 		type: 'string',
 		displayOptions: {
 			show: {
-				operation: [
-					'addConfig',
-				],
+				operation: ['addConfig'],
+				'@version': [{ _cnd: { lt: 1.1 } }],
 			},
 		},
 		default: '',
@@ -25,9 +42,7 @@ export const addConfigFields: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				operation: [
-					'addConfig',
-				],
+				operation: ['addConfig'],
 			},
 		},
 		default: '',
@@ -41,12 +56,10 @@ export const addConfigFields: INodeProperties[] = [
 		type: 'collection',
 		displayOptions: {
 			show: {
-				operation: [
-					'addConfig',
-				],
+				operation: ['addConfig'],
 			},
 		},
-		placeholder: 'Add Option',
+		placeholder: 'Add option',
 		default: {},
 		options: [
 			{

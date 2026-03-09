@@ -1,5 +1,5 @@
-import { IExecuteFunctions } from 'n8n-core';
-import {
+import type {
+	IExecuteFunctions,
 	IDataObject,
 	ILoadOptionsFunctions,
 	INodeExecutionData,
@@ -7,6 +7,8 @@ import {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
+
 import { collectionFields, collectionOperations } from './CollectionDescription';
 import {
 	createCollectionEntry,
@@ -23,8 +25,7 @@ export class Cockpit implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Cockpit',
 		name: 'cockpit',
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-icon-not-svg
-		icon: 'file:cockpit.png',
+		icon: { light: 'file:cockpit.svg', dark: 'file:cockpit.dark.svg' },
 		group: ['output'],
 		version: 1,
 		subtitle: '={{ $parameter["operation"] + ": " + $parameter["resource"] }}',
@@ -32,8 +33,9 @@ export class Cockpit implements INodeType {
 		defaults: {
 			name: 'Cockpit',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		usableAsTool: true,
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'cockpitApi',
@@ -102,8 +104,8 @@ export class Cockpit implements INodeType {
 		const items = this.getInputData();
 		const returnData: IDataObject[] = [];
 		const length = items.length;
-		const resource = this.getNodeParameter('resource', 0) as string;
-		const operation = this.getNodeParameter('operation', 0) as string;
+		const resource = this.getNodeParameter('resource', 0);
+		const operation = this.getNodeParameter('operation', 0);
 
 		let responseData;
 
@@ -117,11 +119,11 @@ export class Cockpit implements INodeType {
 
 						responseData = await createCollectionEntry.call(this, collectionName, data);
 					} else if (operation === 'getAll') {
-						const options = this.getNodeParameter('options', i) as IDataObject;
-						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						const options = this.getNodeParameter('options', i);
+						const returnAll = this.getNodeParameter('returnAll', i);
 
 						if (!returnAll) {
-							options.limit = this.getNodeParameter('limit', i) as number;
+							options.limit = this.getNodeParameter('limit', i);
 						}
 
 						responseData = await getAllCollectionEntries.call(this, collectionName, options);

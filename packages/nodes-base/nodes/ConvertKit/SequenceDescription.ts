@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const sequenceOperations: INodeProperties[] = [
 	{
@@ -19,10 +19,10 @@ export const sequenceOperations: INodeProperties[] = [
 				action: 'Add a subscriber',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get all sequences',
-				action: 'Get all sequences',
+				description: 'Get many sequences',
+				action: 'Get many sequences',
 			},
 			{
 				name: 'Get Subscriptions',
@@ -42,7 +42,7 @@ export const sequenceFields: INodeProperties[] = [
 		name: 'id',
 		type: 'options',
 		description:
-			'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+			'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 		typeOptions: {
 			loadOptionsMethod: 'getSequences',
 		},
@@ -166,7 +166,7 @@ export const sequenceFields: INodeProperties[] = [
 				},
 				default: [],
 				description:
-					'Tags. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'Tags. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 		],
 	},

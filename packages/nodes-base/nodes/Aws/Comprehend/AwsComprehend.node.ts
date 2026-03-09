@@ -1,8 +1,14 @@
-import { IExecuteFunctions } from 'n8n-core';
-
-import { IDataObject, INodeExecutionData, INodeType, INodeTypeDescription } from 'n8n-workflow';
+import type {
+	IExecuteFunctions,
+	IDataObject,
+	INodeExecutionData,
+	INodeType,
+	INodeTypeDescription,
+} from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { awsApiRequestREST } from './GenericFunctions';
+import { awsNodeAuthOptions, awsNodeCredentials } from '../utils';
 
 export class AwsComprehend implements INodeType {
 	description: INodeTypeDescription = {
@@ -13,18 +19,15 @@ export class AwsComprehend implements INodeType {
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description: 'Sends data to Amazon Comprehend',
+		schemaPath: 'Aws/Comprehend',
 		defaults: {
 			name: 'AWS Comprehend',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
-		credentials: [
-			{
-				name: 'aws',
-				required: true,
-			},
-		],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
+		credentials: awsNodeCredentials,
 		properties: [
+			awsNodeAuthOptions,
 			{
 				displayName: 'Resource',
 				name: 'resource',
@@ -133,9 +136,6 @@ export class AwsComprehend implements INodeType {
 				displayName: 'Text',
 				name: 'text',
 				type: 'string',
-				typeOptions: {
-					alwaysOpenEditWindow: true,
-				},
 				default: '',
 				displayOptions: {
 					show: {
@@ -175,9 +175,6 @@ export class AwsComprehend implements INodeType {
 						displayName: 'Endpoint Arn',
 						name: 'endpointArn',
 						type: 'string',
-						typeOptions: {
-							alwaysOpenEditWindow: true,
-						},
 						default: '',
 						description:
 							'The Amazon Resource Name of an endpoint that is associated with a custom entity recognition model',
@@ -189,10 +186,10 @@ export class AwsComprehend implements INodeType {
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
-		const returnData: IDataObject[] = [];
+		const returnData: INodeExecutionData[] = [];
 		let responseData;
-		const resource = this.getNodeParameter('resource', 0) as string;
-		const operation = this.getNodeParameter('operation', 0) as string;
+		const resource = this.getNodeParameter('resource', 0);
+		const operation = this.getNodeParameter('operation', 0);
 		for (let i = 0; i < items.length; i++) {
 			try {
 				if (resource === 'text') {
@@ -214,7 +211,7 @@ export class AwsComprehend implements INodeType {
 							{ 'x-amz-target': action, 'Content-Type': 'application/x-amz-json-1.1' },
 						);
 
-						if (simple === true) {
+						if (simple) {
 							responseData = responseData.Languages.reduce(
 								(accumulator: { [key: string]: number }, currentValue: IDataObject) => {
 									accumulator[currentValue.LanguageCode as string] = currentValue.Score as number;
@@ -249,7 +246,7 @@ export class AwsComprehend implements INodeType {
 						const action = 'Comprehend_20171127.DetectEntities';
 						const text = this.getNodeParameter('text', i) as string;
 						const languageCode = this.getNodeParameter('languageCode', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i);
 
 						const body: IDataObject = {
 							Text: text,
@@ -272,19 +269,23 @@ export class AwsComprehend implements INodeType {
 					}
 				}
 
-				if (Array.isArray(responseData)) {
-					returnData.push.apply(returnData, responseData as IDataObject[]);
-				} else {
-					returnData.push(responseData as IDataObject);
-				}
+				const executionData = this.helpers.constructExecutionMetaData(
+					this.helpers.returnJsonArray(responseData),
+					{ itemData: { item: i } },
+				);
+				returnData.push(...executionData);
 			} catch (error) {
 				if (this.continueOnFail()) {
-					returnData.push({ error: error.message });
+					const executionData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray({ error: error.message }),
+						{ itemData: { item: i } },
+					);
+					returnData.push(...executionData);
 					continue;
 				}
 				throw error;
 			}
 		}
-		return [this.helpers.returnJsonArray(returnData)];
+		return [returnData];
 	}
 }

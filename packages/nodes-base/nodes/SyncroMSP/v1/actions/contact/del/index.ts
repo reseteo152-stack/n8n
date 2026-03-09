@@ -1,7 +1,4 @@
-import { deleteContact as execute } from './execute';
 import { contactDeleteDescription as description } from './description';
+import { deleteContact as execute } from './execute';
 
-export {
-	description,
-	execute,
-};
+export { description, execute };

@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const eventOperations: INodeProperties[] = [
 	{
@@ -19,10 +19,10 @@ export const eventOperations: INodeProperties[] = [
 				action: 'Get an event',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get all events',
-				action: 'Get all events',
+				description: 'Get many events',
+				action: 'Get many events',
 			},
 			{
 				name: 'Register',
@@ -160,7 +160,7 @@ export const eventFields: INodeProperties[] = [
 		name: 'eventId',
 		type: 'options',
 		description:
-			'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+			'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 		typeOptions: {
 			loadOptionsMethod: 'getEvents',
 		},
@@ -293,7 +293,7 @@ export const eventFields: INodeProperties[] = [
 				},
 				default: '',
 				description:
-					'Event Session ID. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'Event Session ID. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Website',

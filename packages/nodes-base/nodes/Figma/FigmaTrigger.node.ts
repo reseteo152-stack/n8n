@@ -1,16 +1,19 @@
-import { IHookFunctions, IWebhookFunctions } from 'n8n-core';
-
-import { IDataObject, INodeType, INodeTypeDescription, IWebhookResponseData } from 'n8n-workflow';
+import { snakeCase } from 'change-case';
+import { randomBytes } from 'crypto';
+import type {
+	IHookFunctions,
+	IWebhookFunctions,
+	IDataObject,
+	INodeType,
+	INodeTypeDescription,
+	IWebhookResponseData,
+} from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { figmaApiRequest } from './GenericFunctions';
 
-import { snakeCase } from 'change-case';
-
-import { randomBytes } from 'crypto';
-
 export class FigmaTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-display-name-unsuffixed-trigger-node
 		displayName: 'Figma Trigger (Beta)',
 		name: 'figmaTrigger',
 		icon: 'file:figma.svg',
@@ -22,7 +25,7 @@ export class FigmaTrigger implements INodeType {
 			name: 'Figma Trigger (Beta)',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'figmaApi',
@@ -87,7 +90,6 @@ export class FigmaTrigger implements INodeType {
 		],
 	};
 
-	// @ts-ignore (because of request)
 	webhookMethods = {
 		default: {
 			async checkExists(this: IHookFunctions): Promise<boolean> {
@@ -127,7 +129,7 @@ export class FigmaTrigger implements INodeType {
 					team_id: teamId,
 					description: `n8n-webhook:${webhookUrl}`,
 					endpoint: webhookUrl,
-					passcode: randomBytes(10).toString('hex') as string,
+					passcode: randomBytes(10).toString('hex'),
 				};
 
 				const responseData = await figmaApiRequest.call(this, 'POST', endpoint, body);
@@ -150,7 +152,7 @@ export class FigmaTrigger implements INodeType {
 						return false;
 					}
 					// Remove from the static workflow data so that it is clear
-					// that no webhooks are registred anymore
+					// that no webhooks are registered anymore
 					delete webhookData.webhookId;
 				}
 				return true;

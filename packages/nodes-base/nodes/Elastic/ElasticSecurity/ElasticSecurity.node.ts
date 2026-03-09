@@ -1,26 +1,13 @@
-import { IExecuteFunctions } from 'n8n-core';
-
-import {
-	ICredentialsDecrypted,
-	ICredentialTestFunctions,
+import type {
+	IExecuteFunctions,
 	IDataObject,
 	ILoadOptionsFunctions,
-	INodeCredentialTestResult,
 	INodeExecutionData,
 	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
-	NodeOperationError,
 } from 'n8n-workflow';
-
-import {
-	elasticSecurityApiRequest,
-	getConnector,
-	getVersion,
-	handleListing,
-	throwOnEmptyUpdate,
-	tolerateTrailingSlash,
-} from './GenericFunctions';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import {
 	caseCommentFields,
@@ -32,15 +19,14 @@ import {
 	connectorFields,
 	connectorOperations,
 } from './descriptions';
-
 import {
-	Connector,
-	ConnectorCreatePayload,
-	ConnectorType,
-	ElasticSecurityApiCredentials,
-} from './types';
-
-import { OptionsWithUri } from 'request';
+	elasticSecurityApiRequest,
+	getConnector,
+	getVersion,
+	handleListing,
+	throwOnEmptyUpdate,
+} from './GenericFunctions';
+import type { Connector, ConnectorCreatePayload, ConnectorType } from './types';
 
 export class ElasticSecurity implements INodeType {
 	description: INodeTypeDescription = {
@@ -51,16 +37,17 @@ export class ElasticSecurity implements INodeType {
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description: 'Consume the Elastic Security API',
+		schemaPath: 'Elastic/ElasticSecurity',
 		defaults: {
 			name: 'Elastic Security',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		usableAsTool: true,
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'elasticSecurityApi',
 				required: true,
-				testedBy: 'elasticSecurityApiTest',
 			},
 		],
 		properties: [
@@ -117,57 +104,14 @@ export class ElasticSecurity implements INodeType {
 				return connectors.map(({ name, id }) => ({ name, value: id }));
 			},
 		},
-		credentialTest: {
-			async elasticSecurityApiTest(
-				this: ICredentialTestFunctions,
-				credential: ICredentialsDecrypted,
-			): Promise<INodeCredentialTestResult> {
-				const {
-					username,
-					password,
-					baseUrl: rawBaseUrl,
-				} = credential.data as ElasticSecurityApiCredentials;
-
-				const baseUrl = tolerateTrailingSlash(rawBaseUrl);
-
-				const token = Buffer.from(`${username}:${password}`).toString('base64');
-
-				const endpoint = '/cases/status';
-
-				const options: OptionsWithUri = {
-					headers: {
-						Authorization: `Basic ${token}`,
-						'kbn-xsrf': true,
-					},
-					method: 'GET',
-					body: {},
-					qs: {},
-					uri: `${baseUrl}/api${endpoint}`,
-					json: true,
-				};
-
-				try {
-					await this.helpers.request(options);
-					return {
-						status: 'OK',
-						message: 'Authentication successful',
-					};
-				} catch (error) {
-					return {
-						status: 'Error',
-						message: error.message,
-					};
-				}
-			},
-		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
-		const returnData: IDataObject[] = [];
+		const returnData: INodeExecutionData[] = [];
 
-		const resource = this.getNodeParameter('resource', 0) as string;
-		const operation = this.getNodeParameter('operation', 0) as string;
+		const resource = this.getNodeParameter('resource', 0);
+		const operation = this.getNodeParameter('operation', 0);
 
 		let responseData;
 
@@ -252,7 +196,7 @@ export class ElasticSecurity implements INodeType {
 						const {
 							syncAlerts, // ignored because already set
 							...rest
-						} = this.getNodeParameter('additionalFields', i) as IDataObject;
+						} = this.getNodeParameter('additionalFields', i);
 
 						if (Object.keys(rest).length) {
 							Object.assign(body, rest);
@@ -322,7 +266,7 @@ export class ElasticSecurity implements INodeType {
 						const caseId = this.getNodeParameter('caseId', i);
 
 						const body = {} as IDataObject;
-						const updateFields = this.getNodeParameter('updateFields', i) as IDataObject;
+						const updateFields = this.getNodeParameter('updateFields', i);
 
 						if (!Object.keys(updateFields).length) {
 							throwOnEmptyUpdate.call(this, resource);
@@ -442,7 +386,7 @@ export class ElasticSecurity implements INodeType {
 
 						const simple = this.getNodeParameter('simple', i) as boolean;
 
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i);
 
 						const body = {
 							comment: this.getNodeParameter('comment', i),
@@ -454,7 +398,7 @@ export class ElasticSecurity implements INodeType {
 						const endpoint = `/cases/${caseId}/comments`;
 						responseData = await elasticSecurityApiRequest.call(this, 'POST', endpoint, body);
 
-						if (simple === true) {
+						if (simple) {
 							const { comments } = responseData;
 							responseData = comments[comments.length - 1];
 						}
@@ -516,7 +460,7 @@ export class ElasticSecurity implements INodeType {
 						const patchEndpoint = `/cases/${caseId}/comments`;
 						responseData = await elasticSecurityApiRequest.call(this, 'PATCH', patchEndpoint, body);
 
-						if (simple === true) {
+						if (simple) {
 							const { comments } = responseData;
 							responseData = comments[comments.length - 1];
 						}
@@ -573,18 +517,24 @@ export class ElasticSecurity implements INodeType {
 					}
 				}
 
-				Array.isArray(responseData)
-					? returnData.push(...responseData)
-					: returnData.push(responseData);
+				const executionData = this.helpers.constructExecutionMetaData(
+					this.helpers.returnJsonArray(responseData as IDataObject[]),
+					{ itemData: { item: i } },
+				);
+				returnData.push(...executionData);
 			} catch (error) {
 				if (this.continueOnFail()) {
-					returnData.push({ error: error.message });
+					const executionErrorData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray({ error: error.message }),
+						{ itemData: { item: i } },
+					);
+					returnData.push(...executionErrorData);
 					continue;
 				}
 				throw error;
 			}
 		}
 
-		return [this.helpers.returnJsonArray(returnData)];
+		return [returnData];
 	}
 }

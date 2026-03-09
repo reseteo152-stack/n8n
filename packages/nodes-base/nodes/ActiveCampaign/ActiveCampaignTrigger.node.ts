@@ -1,6 +1,6 @@
-import { IHookFunctions, IWebhookFunctions } from 'n8n-core';
-
-import {
+import type {
+	IHookFunctions,
+	IWebhookFunctions,
 	IDataObject,
 	ILoadOptionsFunctions,
 	INodePropertyOptions,
@@ -8,6 +8,7 @@ import {
 	INodeTypeDescription,
 	IWebhookResponseData,
 } from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { activeCampaignApiRequest, activeCampaignApiRequestAllItems } from './GenericFunctions';
 
@@ -15,8 +16,7 @@ export class ActiveCampaignTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'ActiveCampaign Trigger',
 		name: 'activeCampaignTrigger',
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-icon-not-svg
-		icon: 'file:activeCampaign.png',
+		icon: { light: 'file:activeCampaign.svg', dark: 'file:activeCampaign.dark.svg' },
 		group: ['trigger'],
 		version: 1,
 		description: 'Handle ActiveCampaign events via webhooks',
@@ -24,7 +24,7 @@ export class ActiveCampaignTrigger implements INodeType {
 			name: 'ActiveCampaign Trigger',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'activeCampaignApi',
@@ -45,7 +45,7 @@ export class ActiveCampaignTrigger implements INodeType {
 				name: 'events',
 				type: 'multiOptions',
 				description:
-					'Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+					'Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				typeOptions: {
 					loadOptionsMethod: 'getEvents',
 				},
@@ -82,9 +82,10 @@ export class ActiveCampaignTrigger implements INodeType {
 			},
 		],
 	};
+
 	methods = {
 		loadOptions: {
-			// Get all the events to display them to user so that he can
+			// Get all the events to display them to user so that they can
 			// select them easily
 			async getEvents(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const returnData: INodePropertyOptions[] = [];
@@ -108,7 +109,7 @@ export class ActiveCampaignTrigger implements INodeType {
 			},
 		},
 	};
-	// @ts-ignore
+
 	webhookMethods = {
 		default: {
 			async checkExists(this: IHookFunctions): Promise<boolean> {
@@ -167,7 +168,7 @@ export class ActiveCampaignTrigger implements INodeType {
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
 		const req = this.getRequestObject();
 		return {
-			workflowData: [this.helpers.returnJsonArray(req.body)],
+			workflowData: [this.helpers.returnJsonArray(req.body as IDataObject[])],
 		};
 	}
 }

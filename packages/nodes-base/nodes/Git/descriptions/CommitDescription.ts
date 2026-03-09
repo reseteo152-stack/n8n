@@ -1,6 +1,4 @@
-import {
-	INodeProperties,
-} from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const commitFields: INodeProperties[] = [
 	{
@@ -9,9 +7,7 @@ export const commitFields: INodeProperties[] = [
 		type: 'string',
 		displayOptions: {
 			show: {
-				operation: [
-					'commit',
-				],
+				operation: ['commit'],
 			},
 		},
 		default: '',
@@ -23,21 +19,29 @@ export const commitFields: INodeProperties[] = [
 		type: 'collection',
 		displayOptions: {
 			show: {
-				operation: [
-					'commit',
-				],
+				operation: ['commit'],
 			},
 		},
-		placeholder: 'Add Option',
+		placeholder: 'Add option',
 		default: {},
 		options: [
+			{
+				displayName: 'Branch',
+				name: 'branch',
+				type: 'string',
+				default: '',
+				placeholder: 'main',
+				description:
+					'The branch to switch to before committing. If empty or not set, will commit to current branch.',
+			},
 			{
 				displayName: 'Paths to Add',
 				name: 'pathsToAdd',
 				type: 'string',
 				default: '',
 				placeholder: '/data/file1.json',
-				description: 'Comma-separated list of paths (absolute or relative to Repository Path) of files or folders to commit. If not set will all "added" files and folders be committed.',
+				description:
+					'Comma-separated list of paths (absolute or relative to Repository Path) of files or folders to commit. If not set will all "added" files and folders be committed.',
 			},
 		],
 	},

@@ -1,77 +1,95 @@
-import { BINARY_ENCODING, IExecuteFunctions } from 'n8n-core';
-import {
+import { writeFile as fsWriteFile } from 'fs/promises';
+import getSystemFonts from 'get-system-fonts';
+import gm from 'gm';
+import type {
+	IBinaryData,
 	IDataObject,
+	IExecuteFunctions,
 	ILoadOptionsFunctions,
 	INodeExecutionData,
 	INodeProperties,
 	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
-	NodeOperationError,
 } from 'n8n-workflow';
-import gm from 'gm';
-import { file } from 'tmp-promise';
+import { NodeOperationError, NodeConnectionTypes, deepCopy } from 'n8n-workflow';
 import { parse as pathParse } from 'path';
-import { writeFile as fsWriteFile } from 'fs';
-import { promisify } from 'util';
-const fsWriteFileAsync = promisify(fsWriteFile);
-import getSystemFonts from 'get-system-fonts';
+import { file } from 'tmp-promise';
+
+type EditImageNodeOptions = {
+	destinationKey?: string;
+	font?: string;
+	fileName?: string;
+	format?: string;
+	quality?: number;
+};
 
 const nodeOperations: INodePropertyOptions[] = [
 	{
 		name: 'Blur',
 		value: 'blur',
 		description: 'Adds a blur to the image and so makes it less sharp',
+		action: 'Blur Image',
 	},
 	{
 		name: 'Border',
 		value: 'border',
 		description: 'Adds a border to the image',
+		action: 'Border Image',
 	},
 	{
 		name: 'Composite',
 		value: 'composite',
 		description: 'Composite image on top of another one',
+		action: 'Composite Image',
 	},
 	{
 		name: 'Create',
 		value: 'create',
 		description: 'Create a new image',
+		action: 'Create Image',
 	},
 	{
 		name: 'Crop',
 		value: 'crop',
 		description: 'Crops the image',
+		action: 'Crop Image',
 	},
 	{
 		name: 'Draw',
 		value: 'draw',
 		description: 'Draw on image',
+		action: 'Draw Image',
 	},
 	{
 		name: 'Rotate',
 		value: 'rotate',
 		description: 'Rotate image',
+		action: 'Rotate Image',
 	},
 	{
 		name: 'Resize',
 		value: 'resize',
 		description: 'Change the size of image',
+		action: 'Resize Image',
 	},
 	{
 		name: 'Shear',
 		value: 'shear',
 		description: 'Shear image along the X or Y axis',
+		action: 'Shear Image',
 	},
 	{
 		name: 'Text',
 		value: 'text',
 		description: 'Adds text to image',
+		action: 'Apply Text to Image',
 	},
 	{
 		name: 'Transparent',
 		value: 'transparent',
 		description: 'Make a color in image transparent',
+		action: 'Add Transparency to Image',
 	},
 ];
 
@@ -748,6 +766,7 @@ export class EditImage implements INodeType {
 		displayName: 'Edit Image',
 		name: 'editImage',
 		icon: 'fa:image',
+		iconColor: 'purple',
 		group: ['transform'],
 		version: 1,
 		description: 'Edits an image like blur, resize or adding border and text',
@@ -755,8 +774,8 @@ export class EditImage implements INodeType {
 			name: 'Edit Image',
 			color: '#553399',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		properties: [
 			{
 				displayName: 'Operation',
@@ -776,20 +795,14 @@ export class EditImage implements INodeType {
 					},
 					...nodeOperations,
 				].sort((a, b) => {
-					if (
-						(a as INodePropertyOptions).name.toLowerCase() <
-						(b as INodePropertyOptions).name.toLowerCase()
-					) {
+					if (a.name.toLowerCase() < b.name.toLowerCase()) {
 						return -1;
 					}
-					if (
-						(a as INodePropertyOptions).name.toLowerCase() >
-						(b as INodePropertyOptions).name.toLowerCase()
-					) {
+					if (a.name.toLowerCase() > b.name.toLowerCase()) {
 						return 1;
 					}
 					return 0;
-				}) as INodePropertyOptions[],
+				}),
 				default: 'border',
 			},
 			{
@@ -845,9 +858,9 @@ export class EditImage implements INodeType {
 								typeOptions: {
 									loadOptionsMethod: 'getFonts',
 								},
-								default: 'default',
+								default: '',
 								description:
-									'The font to use. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+									'The font to use. Defaults to Arial. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 							},
 						],
 					},
@@ -859,7 +872,7 @@ export class EditImage implements INodeType {
 				displayName: 'Options',
 				name: 'options',
 				type: 'collection',
-				placeholder: 'Add Option',
+				placeholder: 'Add option',
 				default: {},
 				displayOptions: {
 					hide: {
@@ -867,6 +880,14 @@ export class EditImage implements INodeType {
 					},
 				},
 				options: [
+					{
+						displayName: 'Destination Output Field',
+						name: 'destinationKey',
+						type: 'string',
+						default: 'data',
+						placeholder: 'e.g image',
+						description: 'The name of the output field that will contain the file data',
+					},
 					{
 						displayName: 'File Name',
 						name: 'fileName',
@@ -886,9 +907,9 @@ export class EditImage implements INodeType {
 						typeOptions: {
 							loadOptionsMethod: 'getFonts',
 						},
-						default: 'default',
+						default: '',
 						description:
-							'The font to use. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							'The font to use. Defaults to Arial. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 					{
 						displayName: 'Format',
@@ -914,6 +935,10 @@ export class EditImage implements INodeType {
 							{
 								name: 'tiff',
 								value: 'tiff',
+							},
+							{
+								name: 'WebP',
+								value: 'webp',
 							},
 						],
 						default: 'jpeg',
@@ -943,19 +968,18 @@ export class EditImage implements INodeType {
 	methods = {
 		loadOptions: {
 			async getFonts(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-				// @ts-ignore
 				const files = await getSystemFonts();
 				const returnData: INodePropertyOptions[] = [];
 
-				files.forEach((file: string) => {
-					const pathParts = pathParse(file);
+				files.forEach((entry: string) => {
+					const pathParts = pathParse(entry);
 					if (!pathParts.ext) {
 						return;
 					}
 
 					returnData.push({
 						name: pathParts.name,
-						value: file,
+						value: entry,
 					});
 				});
 
@@ -967,11 +991,6 @@ export class EditImage implements INodeType {
 						return 1;
 					}
 					return 0;
-				});
-
-				returnData.unshift({
-					name: 'default',
-					value: 'default',
 				});
 
 				return returnData;
@@ -990,10 +1009,17 @@ export class EditImage implements INodeType {
 			try {
 				item = items[itemIndex];
 
-				const operation = this.getNodeParameter('operation', itemIndex) as string;
-				const dataPropertyName = this.getNodeParameter('dataPropertyName', itemIndex) as string;
+				const operation = this.getNodeParameter('operation', itemIndex);
+				const dataPropertyName = this.getNodeParameter('dataPropertyName', itemIndex) as
+					| string
+					| IBinaryData;
 
-				const options = this.getNodeParameter('options', itemIndex, {}) as IDataObject;
+				const options = this.getNodeParameter('options', itemIndex, {}) as EditImageNodeOptions;
+
+				let binaryPropertyName = options.destinationKey;
+				if (!binaryPropertyName) {
+					binaryPropertyName = typeof dataPropertyName === 'string' ? dataPropertyName : 'data';
+				}
 
 				const cleanupFunctions: Array<() => void> = [];
 
@@ -1021,6 +1047,7 @@ export class EditImage implements INodeType {
 					rotate: ['backgroundColor', 'rotate'],
 					shear: ['degreesX', 'degreesY'],
 					text: ['font', 'fontColor', 'fontSize', 'lineLength', 'positionX', 'positionY', 'text'],
+					transparent: ['color'],
 				};
 
 				let operations: IDataObject[] = [];
@@ -1049,20 +1076,7 @@ export class EditImage implements INodeType {
 
 				if (operations[0].operation !== 'create') {
 					// "create" generates a new image so does not require any incoming data.
-					if (item.binary === undefined) {
-						throw new NodeOperationError(this.getNode(), 'Item does not contain any binary data.', {
-							itemIndex,
-						});
-					}
-
-					if (item.binary[dataPropertyName as string] === undefined) {
-						throw new NodeOperationError(
-							this.getNode(),
-							`Item does not contain any binary data with the name "${dataPropertyName}".`,
-							{ itemIndex },
-						);
-					}
-
+					this.helpers.assertBinaryData(itemIndex, dataPropertyName);
 					const binaryDataBuffer = await this.helpers.getBinaryDataBuffer(
 						itemIndex,
 						dataPropertyName,
@@ -1082,12 +1096,12 @@ export class EditImage implements INodeType {
 				if (operation === 'information') {
 					// Just return the information
 					const imageData = await new Promise<IDataObject>((resolve, reject) => {
-						gmInstance = gmInstance.identify((error, imageData) => {
+						gmInstance = gmInstance.identify((error, data) => {
 							if (error) {
 								reject(error);
 								return;
 							}
-							resolve(imageData as unknown as IDataObject);
+							resolve(data as unknown as IDataObject);
 						});
 					});
 
@@ -1113,21 +1127,16 @@ export class EditImage implements INodeType {
 						const geometryString =
 							(positionX >= 0 ? '+' : '') + positionX + (positionY >= 0 ? '+' : '') + positionY;
 
-						if (item.binary![operationData.dataPropertyNameComposite as string] === undefined) {
-							throw new NodeOperationError(
-								this.getNode(),
-								`Item does not contain any binary data with the name "${operationData.dataPropertyNameComposite}".`,
-								{ itemIndex },
-							);
-						}
-
-						const { fd, path, cleanup } = await file();
-						cleanupFunctions.push(cleanup);
+						const binaryPropertyName = operationData.dataPropertyNameComposite as string;
+						this.helpers.assertBinaryData(itemIndex, binaryPropertyName);
 						const binaryDataBuffer = await this.helpers.getBinaryDataBuffer(
 							itemIndex,
-							operationData.dataPropertyNameComposite as string,
+							binaryPropertyName,
 						);
-						await fsWriteFileAsync(fd, binaryDataBuffer);
+
+						const { path, cleanup } = await file();
+						cleanupFunctions.push(cleanup);
+						await fsWriteFile(path, binaryDataBuffer);
 
 						if (operations[0].operation === 'create') {
 							// It seems like if the image gets created newly we have to create a new gm instance
@@ -1243,15 +1252,23 @@ export class EditImage implements INodeType {
 						// Combine the lines to a single string
 						const renderText = lines.join('\n');
 
-						const font = options.font || operationData.font;
+						let font = (options.font || operationData.font) as string | undefined;
+						if (!font) {
+							const fonts = await getSystemFonts();
+							font = fonts.find((_font) => _font.includes('Arial.'));
+						}
 
-						if (font && font !== 'default') {
-							gmInstance = gmInstance!.font(font as string);
+						if (!font) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'Default font not found. Select a font from the options.',
+							);
 						}
 
 						gmInstance = gmInstance!
 							.fill(operationData.fontColor as string)
 							.fontSize(operationData.fontSize as number)
+							.font(font)
 							.drawText(
 								operationData.positionX as number,
 								operationData.positionY as number,
@@ -1262,21 +1279,19 @@ export class EditImage implements INodeType {
 					}
 				}
 
-				if (item.binary !== undefined) {
+				if (item.binary !== undefined && newItem.binary) {
 					// Create a shallow copy of the binary data so that the old
 					// data references which do not get changed still stay behind
 					// but the incoming data does not get changed.
 					Object.assign(newItem.binary, item.binary);
 					// Make a deep copy of the binary data we change
-					if (newItem.binary![dataPropertyName as string]) {
-						newItem.binary![dataPropertyName as string] = JSON.parse(
-							JSON.stringify(newItem.binary![dataPropertyName as string]),
-						);
+					if (newItem.binary[binaryPropertyName]) {
+						newItem.binary[binaryPropertyName] = deepCopy(newItem.binary[binaryPropertyName]);
 					}
 				}
 
-				if (newItem.binary![dataPropertyName as string] === undefined) {
-					newItem.binary![dataPropertyName as string] = {
+				if (newItem.binary![binaryPropertyName] === undefined) {
+					newItem.binary![binaryPropertyName] = {
 						data: '',
 						mimeType: '',
 					};
@@ -1288,31 +1303,31 @@ export class EditImage implements INodeType {
 
 				if (options.format !== undefined) {
 					gmInstance = gmInstance!.setFormat(options.format as string);
-					newItem.binary![dataPropertyName as string].fileExtension = options.format as string;
-					newItem.binary![dataPropertyName as string].mimeType = `image/${options.format}`;
-					const fileName = newItem.binary![dataPropertyName as string].fileName;
-					if (fileName && fileName.includes('.')) {
-						newItem.binary![dataPropertyName as string].fileName =
+					newItem.binary![binaryPropertyName].fileExtension = options.format as string;
+					newItem.binary![binaryPropertyName].mimeType = `image/${options.format}`;
+					const fileName = newItem.binary![binaryPropertyName].fileName;
+					if (fileName?.includes('.')) {
+						newItem.binary![binaryPropertyName].fileName =
 							fileName.split('.').slice(0, -1).join('.') + '.' + options.format;
 					}
 				}
 
 				if (options.fileName !== undefined) {
-					newItem.binary![dataPropertyName as string].fileName = options.fileName as string;
+					newItem.binary![binaryPropertyName].fileName = options.fileName as string;
 				}
 
 				returnData.push(
 					await new Promise<INodeExecutionData>((resolve, reject) => {
 						gmInstance.toBuffer(async (error: Error | null, buffer: Buffer) => {
-							cleanupFunctions.forEach(async (cleanup) => await cleanup());
+							cleanupFunctions.forEach(async (cleanup) => cleanup());
 
 							if (error) {
 								return reject(error);
 							}
 
 							const binaryData = await this.helpers.prepareBinaryData(Buffer.from(buffer));
-							newItem.binary![dataPropertyName as string] = {
-								...newItem.binary![dataPropertyName as string],
+							newItem.binary![binaryPropertyName] = {
+								...newItem.binary![binaryPropertyName],
 								...binaryData,
 							};
 
@@ -1335,6 +1350,6 @@ export class EditImage implements INodeType {
 				throw error;
 			}
 		}
-		return this.prepareOutputData(returnData);
+		return [returnData];
 	}
 }

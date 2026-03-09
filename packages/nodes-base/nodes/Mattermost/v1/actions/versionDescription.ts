@@ -1,8 +1,6 @@
 /* eslint-disable n8n-nodes-base/node-filename-against-convention */
-import {
-	INodeProperties,
-	INodeTypeDescription,
-} from 'n8n-workflow';
+import { NodeConnectionTypes, type INodeTypeDescription } from 'n8n-workflow';
+
 import * as channel from './channel';
 import * as message from './message';
 import * as reaction from './reaction';
@@ -19,8 +17,8 @@ export const versionDescription: INodeTypeDescription = {
 	defaults: {
 		name: 'Mattermost',
 	},
-	inputs: ['main'],
-	outputs: ['main'],
+	inputs: [NodeConnectionTypes.Main],
+	outputs: [NodeConnectionTypes.Main],
 	credentials: [
 		{
 			name: 'mattermostApi',

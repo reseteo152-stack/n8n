@@ -2,18 +2,20 @@
 	"node": "n8n-nodes-base.telegram",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
-	"categories": [
-		"Communication"
-	],
+	"categories": ["Communication", "HITL"],
+	"subcategories": {
+		"HITL": ["Human in the Loop"]
+	},
+	"alias": ["human", "form", "wait", "hitl", "approval"],
 	"resources": {
 		"credentialDocumentation": [
 			{
-				"url": "https://docs.n8n.io/credentials/telegram"
+				"url": "https://docs.n8n.io/integrations/builtin/credentials/telegram/"
 			}
 		],
 		"primaryDocumentation": [
 			{
-				"url": "https://docs.n8n.io/nodes/n8n-nodes-base.telegram/"
+				"url": "https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.telegram/"
 			}
 		],
 		"generic": [

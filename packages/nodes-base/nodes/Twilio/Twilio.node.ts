@@ -1,18 +1,14 @@
-import {
+import type {
 	IExecuteFunctions,
-} from 'n8n-core';
-import {
 	IDataObject,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
-	NodeOperationError,
+	IHttpRequestMethods,
 } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
-import {
-	escapeXml,
-	twilioApiRequest,
-} from './GenericFunctions';
+import { escapeXml, twilioApiRequest } from './GenericFunctions';
 
 export class Twilio implements INodeType {
 	description: INodeTypeDescription = {
@@ -26,8 +22,9 @@ export class Twilio implements INodeType {
 		defaults: {
 			name: 'Twilio',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		usableAsTool: true,
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'twilioApi',
@@ -60,9 +57,7 @@ export class Twilio implements INodeType {
 				noDataExpression: true,
 				displayOptions: {
 					show: {
-						resource: [
-							'sms',
-						],
+						resource: ['sms'],
 					},
 				},
 				options: [
@@ -83,9 +78,7 @@ export class Twilio implements INodeType {
 				noDataExpression: true,
 				displayOptions: {
 					show: {
-						resource: [
-							'call',
-						],
+						resource: ['call'],
 					},
 				},
 				options: [
@@ -97,7 +90,6 @@ export class Twilio implements INodeType {
 				],
 				default: 'make',
 			},
-
 
 			// ----------------------------------
 			//         sms / call
@@ -115,14 +107,8 @@ export class Twilio implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: [
-							'send',
-							'make',
-						],
-						resource: [
-							'sms',
-							'call',
-						],
+						operation: ['send', 'make'],
+						resource: ['sms', 'call'],
 					},
 				},
 				description: 'The number from which to send the message',
@@ -136,14 +122,8 @@ export class Twilio implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: [
-							'send',
-							'make',
-						],
-						resource: [
-							'sms',
-							'call',
-						],
+						operation: ['send', 'make'],
+						resource: ['sms', 'call'],
 					},
 				},
 				description: 'The number to which to send the message',
@@ -155,12 +135,8 @@ export class Twilio implements INodeType {
 				default: false,
 				displayOptions: {
 					show: {
-						operation: [
-							'send',
-						],
-						resource: [
-							'sms',
-						],
+						operation: ['send'],
+						resource: ['sms'],
 					},
 				},
 				description: 'Whether the message should be sent to WhatsApp',
@@ -173,12 +149,8 @@ export class Twilio implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: [
-							'send',
-						],
-						resource: [
-							'sms',
-						],
+						operation: ['send'],
+						resource: ['sms'],
 					},
 				},
 				description: 'The message to send',
@@ -190,15 +162,12 @@ export class Twilio implements INodeType {
 				default: false,
 				displayOptions: {
 					show: {
-						operation: [
-							'make',
-						],
-						resource: [
-							'call',
-						],
+						operation: ['make'],
+						resource: ['call'],
 					},
 				},
-				description: 'Whether to use the <a href="https://www.twilio.com/docs/voice/twiml">Twilio Markup Language</a> in the message',
+				description:
+					'Whether to use the <a href="https://www.twilio.com/docs/voice/twiml">Twilio Markup Language</a> in the message',
 			},
 			{
 				displayName: 'Message',
@@ -208,12 +177,8 @@ export class Twilio implements INodeType {
 				required: true,
 				displayOptions: {
 					show: {
-						operation: [
-							'make',
-						],
-						resource: [
-							'call',
-						],
+						operation: ['make'],
+						resource: ['call'],
 					},
 				},
 			},
@@ -229,7 +194,8 @@ export class Twilio implements INodeType {
 						name: 'statusCallback',
 						type: 'string',
 						default: '',
-						description: 'Status Callbacks allow you to receive events related to the REST resources managed by Twilio: Rooms, Recordings and Compositions',
+						description:
+							'Status Callbacks allow you to receive events related to the REST resources managed by Twilio: Rooms, Recordings and Compositions',
 					},
 				],
 			},
@@ -248,7 +214,7 @@ export class Twilio implements INodeType {
 		// For Query string
 		let qs: IDataObject;
 
-		let requestMethod: string;
+		let requestMethod: IHttpRequestMethods;
 		let endpoint: string;
 
 		for (let i = 0; i < items.length; i++) {
@@ -258,8 +224,8 @@ export class Twilio implements INodeType {
 				body = {};
 				qs = {};
 
-				resource = this.getNodeParameter('resource', i) as string;
-				operation = this.getNodeParameter('operation', i) as string;
+				resource = this.getNodeParameter('resource', i);
+				operation = this.getNodeParameter('operation', i);
 
 				if (resource === 'sms') {
 					if (operation === 'send') {
@@ -277,12 +243,16 @@ export class Twilio implements INodeType {
 
 						const toWhatsapp = this.getNodeParameter('toWhatsapp', i) as boolean;
 
-						if (toWhatsapp === true) {
+						if (toWhatsapp) {
 							body.From = `whatsapp:${body.From}`;
 							body.To = `whatsapp:${body.To}`;
 						}
 					} else {
-						throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex: i });
+						throw new NodeOperationError(
+							this.getNode(),
+							`The operation "${operation}" is not known!`,
+							{ itemIndex: i },
+						);
 					}
 				} else if (resource === 'call') {
 					if (operation === 'make') {
@@ -306,10 +276,16 @@ export class Twilio implements INodeType {
 
 						body.StatusCallback = this.getNodeParameter('options.statusCallback', i, '') as string;
 					} else {
-						throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not known!`, { itemIndex: i });
+						throw new NodeOperationError(
+							this.getNode(),
+							`The operation "${operation}" is not known!`,
+							{ itemIndex: i },
+						);
 					}
 				} else {
-					throw new NodeOperationError(this.getNode(), `The resource "${resource}" is not known!`, { itemIndex: i });
+					throw new NodeOperationError(this.getNode(), `The resource "${resource}" is not known!`, {
+						itemIndex: i,
+					});
 				}
 
 				const responseData = await twilioApiRequest.call(this, requestMethod, endpoint, body, qs);

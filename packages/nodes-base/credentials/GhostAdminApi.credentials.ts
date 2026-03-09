@@ -1,4 +1,5 @@
-import {
+import jwt from 'jsonwebtoken';
+import type {
 	ICredentialDataDecryptedObject,
 	ICredentialTestRequest,
 	ICredentialType,
@@ -6,11 +7,13 @@ import {
 	INodeProperties,
 } from 'n8n-workflow';
 
-import jwt from 'jsonwebtoken';
 export class GhostAdminApi implements ICredentialType {
 	name = 'ghostAdminApi';
+
 	displayName = 'Ghost Admin API';
+
 	documentationUrl = 'ghost';
+
 	properties: INodeProperties[] = [
 		{
 			displayName: 'URL',
@@ -23,6 +26,7 @@ export class GhostAdminApi implements ICredentialType {
 			displayName: 'API Key',
 			name: 'apiKey',
 			type: 'string',
+			typeOptions: { password: true },
 			default: '',
 		},
 	];
@@ -36,7 +40,7 @@ export class GhostAdminApi implements ICredentialType {
 			keyid: id,
 			algorithm: 'HS256',
 			expiresIn: '5m',
-			audience: `/v2/admin/`,
+			audience: '/v2/admin/',
 		});
 
 		requestOptions.headers = {

@@ -1,6 +1,12 @@
-import { IHookFunctions, IWebhookFunctions } from 'n8n-core';
-
-import { IDataObject, INodeType, INodeTypeDescription, IWebhookResponseData } from 'n8n-workflow';
+import type {
+	IHookFunctions,
+	IWebhookFunctions,
+	IDataObject,
+	INodeType,
+	INodeTypeDescription,
+	IWebhookResponseData,
+} from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { customerIoApiRequest, eventExists } from './GenericFunctions';
 
@@ -18,14 +24,14 @@ export class CustomerIoTrigger implements INodeType {
 		displayName: 'Customer.io Trigger',
 		name: 'customerIoTrigger',
 		group: ['trigger'],
-		icon: 'file:customerio.svg',
+		icon: { light: 'file:customerio.svg', dark: 'file:customerio.dark.svg' },
 		version: 1,
 		description: 'Starts the workflow on a Customer.io update (Beta)',
 		defaults: {
 			name: 'Customer.io Trigger',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'customerIoApi',
@@ -213,7 +219,7 @@ export class CustomerIoTrigger implements INodeType {
 			},
 		],
 	};
-	// @ts-ignore (because of request)
+
 	webhookMethods = {
 		default: {
 			async checkExists(this: IHookFunctions): Promise<boolean> {
@@ -238,7 +244,10 @@ export class CustomerIoTrigger implements INodeType {
 				}
 
 				for (const webhook of webhooks) {
-					if (webhook.endpoint === webhookUrl && eventExists(currentEvents, webhook.events)) {
+					if (
+						webhook.endpoint === webhookUrl &&
+						eventExists(currentEvents, webhook.events as IDataObject)
+					) {
 						webhookData.webhookId = webhook.id;
 						return true;
 					}
@@ -247,7 +256,6 @@ export class CustomerIoTrigger implements INodeType {
 				return false;
 			},
 			async create(this: IHookFunctions): Promise<boolean> {
-				let webhook;
 				const webhookUrl = this.getNodeWebhookUrl('default');
 				const events = this.getNodeParameter('events', []) as string[];
 
@@ -288,7 +296,7 @@ export class CustomerIoTrigger implements INodeType {
 					events: data,
 				};
 
-				webhook = await customerIoApiRequest.call(this, 'POST', endpoint, body, 'beta');
+				const webhook = await customerIoApiRequest.call(this, 'POST', endpoint, body, 'beta');
 
 				const webhookData = this.getWorkflowStaticData('node');
 				webhookData.webhookId = webhook.id as string;

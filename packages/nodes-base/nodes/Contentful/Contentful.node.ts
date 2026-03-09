@@ -1,14 +1,18 @@
-import { IExecuteFunctions } from 'n8n-core';
+import type {
+	IExecuteFunctions,
+	IDataObject,
+	INodeExecutionData,
+	INodeType,
+	INodeTypeDescription,
+} from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
-import { IDataObject, INodeExecutionData, INodeType, INodeTypeDescription } from 'n8n-workflow';
-
-import { contenfulApiRequestAllItems, contentfulApiRequest } from './GenericFunctions';
-
-import * as SpaceDescription from './SpaceDescription';
+import * as AssetDescription from './AssetDescription';
 import * as ContentTypeDescription from './ContentTypeDescription';
 import * as EntryDescription from './EntryDescription';
-import * as AssetDescription from './AssetDescription';
+import { contentfulApiRequestAllItems, contentfulApiRequest } from './GenericFunctions';
 import * as LocaleDescription from './LocaleDescription';
+import * as SpaceDescription from './SpaceDescription';
 
 export class Contentful implements INodeType {
 	description: INodeTypeDescription = {
@@ -19,12 +23,13 @@ export class Contentful implements INodeType {
 		icon: 'file:contentful.png',
 		group: ['input'],
 		version: 1,
-		description: 'Consume Contenful API',
+		description: 'Consume Contentful API',
 		defaults: {
 			name: 'Contentful',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		usableAsTool: true,
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'contentfulApi',
@@ -82,12 +87,12 @@ export class Contentful implements INodeType {
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-		const resource = this.getNodeParameter('resource', 0) as string;
-		const operation = this.getNodeParameter('operation', 0) as string;
+		const resource = this.getNodeParameter('resource', 0);
+		const operation = this.getNodeParameter('operation', 0);
 		let responseData;
 
 		const items = this.getInputData();
-		const returnData: IDataObject[] = [];
+		const returnData: INodeExecutionData[] = [];
 		const qs: Record<string, string | number> = {};
 
 		for (let i = 0; i < items.length; i++) {
@@ -111,7 +116,7 @@ export class Contentful implements INodeType {
 
 						const id = this.getNodeParameter('contentTypeId', 0) as string;
 
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i);
 
 						responseData = await contentfulApiRequest.call(
 							this,
@@ -132,7 +137,7 @@ export class Contentful implements INodeType {
 
 						const id = this.getNodeParameter('entryId', 0) as string;
 
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i);
 
 						responseData = await contentfulApiRequest.call(
 							this,
@@ -148,9 +153,9 @@ export class Contentful implements INodeType {
 					} else if (operation === 'getAll') {
 						const credentials = await this.getCredentials('contentfulApi');
 
-						const returnAll = this.getNodeParameter('returnAll', 0) as boolean;
+						const returnAll = this.getNodeParameter('returnAll', 0);
 
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i);
 						const rawData = additionalFields.rawData;
 						additionalFields.rawData = undefined;
 
@@ -183,7 +188,7 @@ export class Contentful implements INodeType {
 						}
 
 						if (returnAll) {
-							responseData = await contenfulApiRequestAllItems.call(
+							responseData = await contentfulApiRequestAllItems.call(
 								this,
 								'items',
 								'GET',
@@ -194,14 +199,14 @@ export class Contentful implements INodeType {
 
 							if (!rawData) {
 								const assets: IDataObject[] = [];
-								// tslint:disable-next-line: no-any
+
 								responseData.map((asset: any) => {
-									assets.push(asset.fields);
+									assets.push(asset.fields as IDataObject);
 								});
 								responseData = assets;
 							}
 						} else {
-							const limit = this.getNodeParameter('limit', 0) as number;
+							const limit = this.getNodeParameter('limit', 0);
 							qs.limit = limit;
 							responseData = await contentfulApiRequest.call(
 								this,
@@ -214,9 +219,9 @@ export class Contentful implements INodeType {
 
 							if (!rawData) {
 								const assets: IDataObject[] = [];
-								// tslint:disable-next-line: no-any
+
 								responseData.map((asset: any) => {
-									assets.push(asset.fields);
+									assets.push(asset.fields as IDataObject);
 								});
 								responseData = assets;
 							}
@@ -231,7 +236,7 @@ export class Contentful implements INodeType {
 
 						const id = this.getNodeParameter('assetId', 0) as string;
 
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i);
 
 						responseData = await contentfulApiRequest.call(
 							this,
@@ -247,9 +252,9 @@ export class Contentful implements INodeType {
 					} else if (operation === 'getAll') {
 						const credentials = await this.getCredentials('contentfulApi');
 
-						const returnAll = this.getNodeParameter('returnAll', 0) as boolean;
+						const returnAll = this.getNodeParameter('returnAll', 0);
 
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i);
 						const rawData = additionalFields.rawData;
 						additionalFields.rawData = undefined;
 
@@ -282,7 +287,7 @@ export class Contentful implements INodeType {
 						}
 
 						if (returnAll) {
-							responseData = await contenfulApiRequestAllItems.call(
+							responseData = await contentfulApiRequestAllItems.call(
 								this,
 								'items',
 								'GET',
@@ -293,14 +298,14 @@ export class Contentful implements INodeType {
 
 							if (!rawData) {
 								const assets: IDataObject[] = [];
-								// tslint:disable-next-line: no-any
+
 								responseData.map((asset: any) => {
-									assets.push(asset.fields);
+									assets.push(asset.fields as IDataObject);
 								});
 								responseData = assets;
 							}
 						} else {
-							const limit = this.getNodeParameter('limit', i) as number;
+							const limit = this.getNodeParameter('limit', i);
 							qs.limit = limit;
 							responseData = await contentfulApiRequest.call(
 								this,
@@ -313,9 +318,9 @@ export class Contentful implements INodeType {
 
 							if (!rawData) {
 								const assets: IDataObject[] = [];
-								// tslint:disable-next-line: no-any
+
 								responseData.map((asset: any) => {
-									assets.push(asset.fields);
+									assets.push(asset.fields as IDataObject);
 								});
 								responseData = assets;
 							}
@@ -326,12 +331,12 @@ export class Contentful implements INodeType {
 					if (operation === 'getAll') {
 						const credentials = await this.getCredentials('contentfulApi');
 
-						const returnAll = this.getNodeParameter('returnAll', 0) as boolean;
+						const returnAll = this.getNodeParameter('returnAll', 0);
 
 						const env = this.getNodeParameter('environmentId', i) as string;
 
 						if (returnAll) {
-							responseData = await contenfulApiRequestAllItems.call(
+							responseData = await contentfulApiRequestAllItems.call(
 								this,
 								'items',
 								'GET',
@@ -340,7 +345,7 @@ export class Contentful implements INodeType {
 								qs,
 							);
 						} else {
-							const limit = this.getNodeParameter('limit', 0) as number;
+							const limit = this.getNodeParameter('limit', 0);
 							qs.limit = limit;
 							responseData = await contentfulApiRequest.call(
 								this,
@@ -353,19 +358,19 @@ export class Contentful implements INodeType {
 						}
 					}
 				}
-				if (Array.isArray(responseData)) {
-					returnData.push.apply(returnData, responseData as IDataObject[]);
-				} else {
-					returnData.push(responseData as IDataObject);
-				}
+				const executionData = this.helpers.constructExecutionMetaData(
+					this.helpers.returnJsonArray(responseData as IDataObject[]),
+					{ itemData: { item: i } },
+				);
+				returnData.push(...executionData);
 			} catch (error) {
 				if (this.continueOnFail()) {
-					returnData.push({ error: error.message });
+					returnData.push({ error: error.message, json: {} });
 					continue;
 				}
 				throw error;
 			}
 		}
-		return [this.helpers.returnJsonArray(returnData)];
+		return [returnData];
 	}
 }

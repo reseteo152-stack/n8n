@@ -1,12 +1,13 @@
-import { IHookFunctions, IWebhookFunctions } from 'n8n-core';
-
-import {
+import { createHmac } from 'crypto';
+import type {
+	IHookFunctions,
+	IWebhookFunctions,
 	IDataObject,
 	INodeType,
 	INodeTypeDescription,
 	IWebhookResponseData,
-	NodeOperationError,
 } from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import {
 	getAutomaticSecret,
@@ -15,8 +16,6 @@ import {
 	webexApiRequest,
 	webexApiRequestAllItems,
 } from './GenericFunctions';
-
-import { createHmac } from 'crypto';
 
 export class CiscoWebexTrigger implements INodeType {
 	description: INodeTypeDescription = {
@@ -29,10 +28,10 @@ export class CiscoWebexTrigger implements INodeType {
 		subtitle: '={{$parameter["resource"] + ":" + $parameter["event"]}}',
 		description: 'Starts the workflow when Cisco Webex events occur.',
 		defaults: {
-			name: 'Webex Trigger',
+			name: 'Webex by Cisco Trigger',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'ciscoWebexOAuth2Api',
@@ -491,7 +490,6 @@ export class CiscoWebexTrigger implements INodeType {
 		],
 	};
 
-	// @ts-ignore (because of request)
 	webhookMethods = {
 		default: {
 			async checkExists(this: IHookFunctions): Promise<boolean> {
@@ -540,13 +538,13 @@ export class CiscoWebexTrigger implements INodeType {
 				};
 
 				if (filters.ownedBy) {
-					body['ownedBy'] = filters.ownedBy as string;
+					body.ownedBy = filters.ownedBy as string;
 				}
 
-				body['secret'] = secret;
+				body.secret = secret;
 
 				if (filter.length) {
-					body['filter'] = filter.join('&');
+					body.filter = filter.join('&');
 				}
 
 				const responseData = await webexApiRequest.call(this, 'POST', endpoint, body);
@@ -570,7 +568,7 @@ export class CiscoWebexTrigger implements INodeType {
 					}
 
 					// Remove from the static workflow data so that it is clear
-					// that no webhooks are registred anymore
+					// that no webhooks are registered anymore
 					delete webhookData.webhookId;
 				}
 				return true;
@@ -587,7 +585,6 @@ export class CiscoWebexTrigger implements INodeType {
 
 		//@ts-ignore
 		const computedSignature = createHmac('sha1', webhookData.secret)
-			//@ts-ignore
 			.update(req.rawBody)
 			.digest('hex');
 		if (headers['x-spark-signature'] !== computedSignature) {

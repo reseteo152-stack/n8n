@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const contactListOperations: INodeProperties[] = [
 	{
@@ -25,10 +25,10 @@ export const contactListOperations: INodeProperties[] = [
 				action: 'Check if a contact list exists',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get all contacts on list',
-				action: 'Get all contact lists',
+				description: 'Get many contacts from a list',
+				action: 'Get many contact lists',
 			},
 			{
 				name: 'Remove',
@@ -61,7 +61,7 @@ export const contactListFields: INodeProperties[] = [
 		},
 		default: '',
 		description:
-			'ID of the list to operate on. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+			'ID of the list to operate on. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 	},
 	{
 		displayName: 'Contact ID',

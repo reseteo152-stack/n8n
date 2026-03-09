@@ -1,4 +1,4 @@
-import {
+import type {
 	IAuthenticateGeneric,
 	ICredentialTestRequest,
 	ICredentialType,
@@ -7,9 +7,13 @@ import {
 
 export class ServiceNowBasicApi implements ICredentialType {
 	name = 'serviceNowBasicApi';
+
 	extends = ['httpBasicAuth'];
+
 	displayName = 'ServiceNow Basic Auth API';
-	documentationUrl = 'serviceNow';
+
+	documentationUrl = 'servicenow';
+
 	properties: INodeProperties[] = [
 		{
 			displayName: 'User',

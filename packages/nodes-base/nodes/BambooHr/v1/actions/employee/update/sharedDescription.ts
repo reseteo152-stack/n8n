@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const updateEmployeeSharedDescription = (sync = false): INodeProperties[] => {
 	let elements: INodeProperties[] = [
@@ -65,7 +65,7 @@ export const updateEmployeeSharedDescription = (sync = false): INodeProperties[]
 			name: 'department',
 			type: 'options',
 			description:
-				'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+				'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 			typeOptions: {
 				loadOptionsMethod: 'getDepartments',
 			},
@@ -76,7 +76,7 @@ export const updateEmployeeSharedDescription = (sync = false): INodeProperties[]
 			name: 'division',
 			type: 'options',
 			description:
-				'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+				'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 			typeOptions: {
 				loadOptionsMethod: 'getDivisions',
 			},
@@ -153,7 +153,7 @@ export const updateEmployeeSharedDescription = (sync = false): INodeProperties[]
 			name: 'location',
 			type: 'options',
 			description:
-				'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+				'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 			typeOptions: {
 				loadOptionsMethod: 'getEmployeeLocations',
 			},
@@ -315,7 +315,7 @@ export const updateEmployeeSharedDescription = (sync = false): INodeProperties[]
 		},
 	];
 
-	if (sync === true) {
+	if (sync) {
 		elements = elements.map((element) => {
 			return Object.assign(element, {
 				displayOptions: {

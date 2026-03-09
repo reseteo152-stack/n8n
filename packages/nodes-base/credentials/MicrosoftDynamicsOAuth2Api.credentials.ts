@@ -1,10 +1,14 @@
-import { ICredentialType, INodeProperties } from 'n8n-workflow';
+import type { ICredentialType, INodeProperties } from 'n8n-workflow';
 
 export class MicrosoftDynamicsOAuth2Api implements ICredentialType {
 	name = 'microsoftDynamicsOAuth2Api';
+
 	extends = ['microsoftOAuth2Api'];
+
 	displayName = 'Microsoft Dynamics OAuth2 API';
+
 	documentationUrl = 'microsoft';
+
 	properties: INodeProperties[] = [
 		//	https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent
 		{
@@ -102,6 +106,12 @@ export class MicrosoftDynamicsOAuth2Api implements ICredentialType {
 			name: 'scope',
 			type: 'hidden',
 			default: '=openid offline_access https://{{$self.subdomain}}.{{$self.region}}/.default',
+		},
+		{
+			displayName: 'Microsoft Graph API Base URL',
+			name: 'graphApiBaseUrl',
+			type: 'hidden',
+			default: 'https://graph.microsoft.com',
 		},
 	];
 }

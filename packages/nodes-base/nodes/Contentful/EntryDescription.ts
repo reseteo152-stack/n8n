@@ -1,4 +1,4 @@
-import { INodeProperties, INodePropertyOptions } from 'n8n-workflow';
+import type { INodeProperties, INodePropertyOptions } from 'n8n-workflow';
 
 export const resource = {
 	name: 'Entry',
@@ -22,7 +22,7 @@ export const operations: INodeProperties[] = [
 				value: 'get',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
 			},
 		],
@@ -188,5 +188,27 @@ export const fields: INodeProperties[] = [
 				operation: ['get'],
 			},
 		},
+	},
+	{
+		displayName: 'Additional Fields',
+		name: 'additionalFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: [resource.value],
+				operation: ['get'],
+			},
+		},
+		options: [
+			{
+				displayName: 'RAW Data',
+				name: 'rawData',
+				type: 'boolean',
+				default: false,
+				description: 'Whether the data should be returned RAW instead of parsed',
+			},
+		],
 	},
 ];

@@ -1,6 +1,11 @@
-import { IHookFunctions, IWebhookFunctions } from 'n8n-core';
-
-import { INodeType, INodeTypeDescription, IWebhookResponseData } from 'n8n-workflow';
+import {
+	type IHookFunctions,
+	type IWebhookFunctions,
+	type INodeType,
+	type INodeTypeDescription,
+	type IWebhookResponseData,
+	NodeConnectionTypes,
+} from 'n8n-workflow';
 
 import { boxApiRequest, boxApiRequestAllItems } from './GenericFunctions';
 
@@ -17,7 +22,7 @@ export class BoxTrigger implements INodeType {
 			name: 'Box Trigger',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'boxOAuth2Api',
@@ -252,7 +257,6 @@ export class BoxTrigger implements INodeType {
 		],
 	};
 
-	// @ts-ignore (because of request)
 	webhookMethods = {
 		default: {
 			async checkExists(this: IHookFunctions): Promise<boolean> {
@@ -277,10 +281,10 @@ export class BoxTrigger implements INodeType {
 								return false;
 							}
 						}
+						// Found matching webhook, store its ID
+						webhookData.webhookId = webhook.id as string;
+						return true;
 					}
-					// Set webhook-id to be sure that it can be deleted
-					webhookData.webhookId = webhook.id as string;
-					return true;
 				}
 				return false;
 			},
@@ -324,7 +328,7 @@ export class BoxTrigger implements INodeType {
 					}
 
 					// Remove from the static workflow data so that it is clear
-					// that no webhooks are registred anymore
+					// that no webhooks are registered anymore
 					delete webhookData.webhookId;
 				}
 				return true;

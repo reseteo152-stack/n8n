@@ -1,6 +1,4 @@
-import {
-	INodeProperties,
-} from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const issueOperations: INodeProperties[] = [
 	{
@@ -10,12 +8,16 @@ export const issueOperations: INodeProperties[] = [
 		noDataExpression: true,
 		displayOptions: {
 			show: {
-				resource: [
-					'issue',
-				],
+				resource: ['issue'],
 			},
 		},
 		options: [
+			{
+				name: 'Add Link',
+				value: 'addLink',
+				description: 'Add a link to an issue',
+				action: 'Add a link to an issue',
+			},
 			{
 				name: 'Create',
 				value: 'create',
@@ -35,10 +37,10 @@ export const issueOperations: INodeProperties[] = [
 				action: 'Get an issue',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get all issues',
-				action: 'Get all issues',
+				description: 'Get many issues',
+				action: 'Get many issues',
 			},
 			{
 				name: 'Update',
@@ -52,7 +54,6 @@ export const issueOperations: INodeProperties[] = [
 ];
 
 export const issueFields: INodeProperties[] = [
-
 	/* -------------------------------------------------------------------------- */
 	/*                                 issue:create                               */
 	/* -------------------------------------------------------------------------- */
@@ -60,16 +61,13 @@ export const issueFields: INodeProperties[] = [
 		displayName: 'Team Name or ID',
 		name: 'teamId',
 		type: 'options',
-		description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+		description:
+			'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 		required: true,
 		displayOptions: {
 			show: {
-				resource: [
-					'issue',
-				],
-				operation: [
-					'create',
-				],
+				resource: ['issue'],
+				operation: ['create'],
 			},
 		},
 		typeOptions: {
@@ -84,12 +82,8 @@ export const issueFields: INodeProperties[] = [
 		required: true,
 		displayOptions: {
 			show: {
-				resource: [
-					'issue',
-				],
-				operation: [
-					'create',
-				],
+				resource: ['issue'],
+				operation: ['create'],
 			},
 		},
 		default: '',
@@ -102,12 +96,8 @@ export const issueFields: INodeProperties[] = [
 		default: {},
 		displayOptions: {
 			show: {
-				resource: [
-					'issue',
-				],
-				operation: [
-					'create',
-				],
+				resource: ['issue'],
+				operation: ['create'],
 			},
 		},
 		options: [
@@ -115,7 +105,8 @@ export const issueFields: INodeProperties[] = [
 				displayName: 'Assignee Name or ID',
 				name: 'assigneeId',
 				type: 'options',
-				description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+				description:
+					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				typeOptions: {
 					loadOptionsMethod: 'getUsers',
 				},
@@ -125,16 +116,12 @@ export const issueFields: INodeProperties[] = [
 				displayName: 'Description',
 				name: 'description',
 				type: 'string',
-				typeOptions: {
-					alwaysOpenEditWindow: true,
-				},
 				default: '',
 			},
 			{
-				displayName: 'Priority Name/ID',
+				displayName: 'Priority',
 				name: 'priorityId',
 				type: 'options',
-				// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 				options: [
 					{
 						name: 'Urgent',
@@ -145,12 +132,12 @@ export const issueFields: INodeProperties[] = [
 						value: 2,
 					},
 					{
-						name: 'Medium',
+						name: 'Normal',
 						value: 3,
 					},
 					{
 						name: 'Low',
-						value: 3,
+						value: 4,
 					},
 					{
 						name: 'No Priority',
@@ -163,7 +150,8 @@ export const issueFields: INodeProperties[] = [
 				displayName: 'State Name or ID',
 				name: 'stateId',
 				type: 'options',
-				description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+				description:
+					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				typeOptions: {
 					loadOptionsMethod: 'getStates',
 				},
@@ -181,13 +169,8 @@ export const issueFields: INodeProperties[] = [
 		required: true,
 		displayOptions: {
 			show: {
-				resource: [
-					'issue',
-				],
-				operation: [
-					'get',
-					'delete',
-				],
+				resource: ['issue'],
+				operation: ['addLink', 'get', 'delete'],
 			},
 		},
 		default: '',
@@ -202,12 +185,8 @@ export const issueFields: INodeProperties[] = [
 		default: false,
 		displayOptions: {
 			show: {
-				resource: [
-					'issue',
-				],
-				operation: [
-					'getAll',
-				],
+				resource: ['issue'],
+				operation: ['getAll'],
 			},
 		},
 		description: 'Whether to return all results or only up to a given limit',
@@ -219,19 +198,12 @@ export const issueFields: INodeProperties[] = [
 		default: 50,
 		typeOptions: {
 			minValue: 1,
-			maxValue: 300,
 		},
 		displayOptions: {
 			show: {
-				resource: [
-					'issue',
-				],
-				operation: [
-					'getAll',
-				],
-				returnAll: [
-					false,
-				],
+				resource: ['issue'],
+				operation: ['getAll'],
+				returnAll: [false],
 			},
 		},
 		description: 'Max number of results to return',
@@ -246,12 +218,8 @@ export const issueFields: INodeProperties[] = [
 		required: true,
 		displayOptions: {
 			show: {
-				resource: [
-					'issue',
-				],
-				operation: [
-					'update',
-				],
+				resource: ['issue'],
+				operation: ['update'],
 			},
 		},
 		default: '',
@@ -264,12 +232,9 @@ export const issueFields: INodeProperties[] = [
 		default: {},
 		displayOptions: {
 			show: {
-				resource: [
-					'issue',
-				],
-				operation: [
-					'update',
-				],
+				resource: ['issue'],
+				operation: ['update'],
+				'@version': [1],
 			},
 		},
 		options: [
@@ -277,7 +242,8 @@ export const issueFields: INodeProperties[] = [
 				displayName: 'Assignee Name or ID',
 				name: 'assigneeId',
 				type: 'options',
-				description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+				description:
+					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				typeOptions: {
 					loadOptionsMethod: 'getUsers',
 				},
@@ -287,16 +253,12 @@ export const issueFields: INodeProperties[] = [
 				displayName: 'Description',
 				name: 'description',
 				type: 'string',
-				typeOptions: {
-					alwaysOpenEditWindow: true,
-				},
 				default: '',
 			},
 			{
 				displayName: 'Priority Name/ID',
 				name: 'priorityId',
 				type: 'options',
-				// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
 				options: [
 					{
 						name: 'Urgent',
@@ -325,7 +287,8 @@ export const issueFields: INodeProperties[] = [
 				displayName: 'State Name or ID',
 				name: 'stateId',
 				type: 'options',
-				description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+				description:
+					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				typeOptions: {
 					loadOptionsMethod: 'getStates',
 				},
@@ -335,7 +298,8 @@ export const issueFields: INodeProperties[] = [
 				displayName: 'Team Name or ID',
 				name: 'teamId',
 				type: 'options',
-				description: 'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+				description:
+					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				typeOptions: {
 					loadOptionsMethod: 'getTeams',
 				},
@@ -348,5 +312,112 @@ export const issueFields: INodeProperties[] = [
 				default: '',
 			},
 		],
+	},
+	{
+		displayName: 'Update Fields',
+		name: 'updateFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['issue'],
+				operation: ['update'],
+			},
+			hide: {
+				'@version': [1],
+			},
+		},
+		options: [
+			{
+				displayName: 'Assignee Name or ID',
+				name: 'assigneeId',
+				type: 'options',
+				description:
+					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				typeOptions: {
+					loadOptionsMethod: 'getUsers',
+				},
+				default: '',
+			},
+			{
+				displayName: 'Description',
+				name: 'description',
+				type: 'string',
+				default: '',
+			},
+			{
+				displayName: 'Priority Name/ID',
+				name: 'priorityId',
+				type: 'options',
+				options: [
+					{
+						name: 'Urgent',
+						value: 1,
+					},
+					{
+						name: 'High',
+						value: 2,
+					},
+					{
+						name: 'Medium',
+						value: 3,
+					},
+					{
+						name: 'Low',
+						value: 4,
+					},
+					{
+						name: 'No Priority',
+						value: 0,
+					},
+				],
+				default: 0,
+			},
+			{
+				displayName: 'State Name or ID',
+				name: 'stateId',
+				type: 'options',
+				description:
+					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				typeOptions: {
+					loadOptionsMethod: 'getStates',
+				},
+				default: '',
+			},
+			{
+				displayName: 'Team Name or ID',
+				name: 'teamId',
+				type: 'options',
+				description:
+					'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				typeOptions: {
+					loadOptionsMethod: 'getTeams',
+				},
+				default: '',
+			},
+			{
+				displayName: 'Title',
+				name: 'title',
+				type: 'string',
+				default: '',
+			},
+		],
+	},
+	/* -------------------------------------------------------------------------- */
+	/*                         	issue:addLink                                  */
+	/* -------------------------------------------------------------------------- */
+	{
+		displayName: 'Link',
+		name: 'link',
+		type: 'string',
+		required: true,
+		displayOptions: {
+			show: {
+				resource: ['issue'],
+				operation: ['addLink'],
+			},
+		},
+		default: '',
 	},
 ];

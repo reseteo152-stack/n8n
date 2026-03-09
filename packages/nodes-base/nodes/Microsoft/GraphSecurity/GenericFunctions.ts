@@ -1,43 +1,45 @@
-import {
+import type {
 	IExecuteFunctions,
-} from 'n8n-core';
-
-import {
 	IDataObject,
-	NodeApiError,
-	NodeOperationError,
+	JsonObject,
+	IRequestOptions,
+	IHttpRequestMethods,
 } from 'n8n-workflow';
-
-import {
-	OptionsWithUri,
-} from 'request';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
 export async function msGraphSecurityApiRequest(
 	this: IExecuteFunctions,
-	method: string,
+	method: IHttpRequestMethods,
 	endpoint: string,
 	body: IDataObject = {},
 	qs: IDataObject = {},
 	headers: IDataObject = {},
 ) {
-	const {
-		oauthTokenData: {
-			access_token, // tslint:disable-line variable-name
-		},
-	} = await this.getCredentials('microsoftGraphSecurityOAuth2Api') as {
+	const credentials = await this.getCredentials<{
 		oauthTokenData: {
 			access_token: string;
-		}
-	};
+		};
+		graphApiBaseUrl?: string;
+	}>('microsoftGraphSecurityOAuth2Api');
 
-	const options: OptionsWithUri = {
+	const {
+		oauthTokenData: { access_token },
+	} = credentials;
+
+	const baseUrl = (
+		typeof credentials.graphApiBaseUrl === 'string' && credentials.graphApiBaseUrl !== ''
+			? credentials.graphApiBaseUrl
+			: 'https://graph.microsoft.com'
+	).replace(/\/+$/, '');
+
+	const options: IRequestOptions = {
 		headers: {
 			Authorization: `Bearer ${access_token}`,
 		},
 		method,
 		body,
 		qs,
-		uri: `https://graph.microsoft.com/v1.0/security${endpoint}`,
+		uri: `${baseUrl}/v1.0/security${endpoint}`,
 		json: true,
 	};
 
@@ -58,29 +60,33 @@ export async function msGraphSecurityApiRequest(
 	} catch (error) {
 		const nestedMessage = error?.error?.error?.message;
 
-		if (nestedMessage.startsWith('{"')) {
-			error = JSON.parse(nestedMessage);
+		if (nestedMessage?.startsWith('{"')) {
+			error = JSON.parse(nestedMessage as string);
 		}
 
-		if (nestedMessage.startsWith('Http request failed with statusCode=BadRequest')) {
+		if (nestedMessage?.startsWith('Http request failed with statusCode=BadRequest')) {
 			error.error.error.message = 'Request failed with bad request';
-		} else if (nestedMessage.startsWith('Http request failed with')) {
-			const stringified = nestedMessage.split(': ').pop();
+		} else if (nestedMessage?.startsWith('Http request failed with')) {
+			const stringified = nestedMessage?.split(': ').pop();
 			if (stringified) {
-				error = JSON.parse(stringified);
+				error = JSON.parse(stringified as string);
 			}
 		}
 
-		if (['Invalid filter clause', 'Invalid ODATA query filter'].includes(nestedMessage)) {
-			error.error.error.message += ' - Please check that your query parameter syntax is correct: https://docs.microsoft.com/en-us/graph/query-parameters#filter-parameter';
+		if (
+			typeof nestedMessage === 'string' &&
+			['Invalid filter clause', 'Invalid ODATA query filter'].includes(nestedMessage)
+		) {
+			error.error.error.message +=
+				' - Please check that your query parameter syntax is correct: https://docs.microsoft.com/en-us/graph/query-parameters#filter-parameter';
 		}
 
-		throw new NodeApiError(this.getNode(), error);
+		throw new NodeApiError(this.getNode(), error as JsonObject);
 	}
 }
 
 export function tolerateDoubleQuotes(filterQueryParameter: string) {
-	return filterQueryParameter.replace(/"/g, `'`);
+	return filterQueryParameter.replace(/"/g, "'");
 }
 
 export function throwOnEmptyUpdate(this: IExecuteFunctions) {

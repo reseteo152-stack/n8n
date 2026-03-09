@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const itemOperations: INodeProperties[] = [
 	{
@@ -31,10 +31,10 @@ export const itemOperations: INodeProperties[] = [
 				action: 'Get an item',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get all items',
-				action: 'Get all items',
+				description: 'Get many items',
+				action: 'Get many items',
 			},
 		],
 		default: 'upsert',
@@ -49,7 +49,7 @@ export const itemFields: INodeProperties[] = [
 		displayName: 'Table Name or ID',
 		name: 'tableName',
 		description:
-			'Table to operate on. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+			'Table to operate on. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		type: 'options',
 		required: true,
 		displayOptions: {
@@ -418,7 +418,7 @@ export const itemFields: INodeProperties[] = [
 				options: [
 					{
 						name: 'expressionAttributeValues',
-						displayName: 'Expression Attribute Vaue',
+						displayName: 'Expression Attribute Value',
 						values: [
 							{
 								displayName: 'Attribute',

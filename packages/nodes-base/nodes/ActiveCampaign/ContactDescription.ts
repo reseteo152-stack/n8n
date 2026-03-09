@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 import { activeCampaignDefaultGetAllProperties } from './GenericFunctions';
 
@@ -33,10 +33,10 @@ export const contactOperations: INodeProperties[] = [
 				action: 'Get a contact',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get data of all contact',
-				action: 'Get all contacts',
+				description: 'Get data of many contacts',
+				action: 'Get many contacts',
 			},
 			{
 				name: 'Update',
@@ -119,7 +119,7 @@ export const contactFields: INodeProperties[] = [
 								},
 								default: '',
 								description:
-									'ID of the field to set. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+									'ID of the field to set. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 							},
 							{
 								displayName: 'Field Value',
@@ -211,7 +211,7 @@ export const contactFields: INodeProperties[] = [
 								},
 								default: '',
 								description:
-									'ID of the field to set. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+									'ID of the field to set. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 							},
 							{
 								displayName: 'Field Value',

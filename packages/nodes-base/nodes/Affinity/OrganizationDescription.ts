@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const organizationOperations: INodeProperties[] = [
 	{
@@ -31,10 +31,10 @@ export const organizationOperations: INodeProperties[] = [
 				action: 'Get an organization',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get all organizations',
-				action: 'Get all organizations',
+				description: 'Get many organizations',
+				action: 'Get many organizations',
 			},
 			{
 				name: 'Update',
@@ -101,7 +101,7 @@ export const organizationFields: INodeProperties[] = [
 				},
 				default: [],
 				description:
-					'Persons that the new organization will be associated with. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'Persons that the new organization will be associated with. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 		],
 	},
@@ -158,7 +158,7 @@ export const organizationFields: INodeProperties[] = [
 				},
 				default: [],
 				description:
-					'Persons that the new organization will be associated with. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'Persons that the new organization will be associated with. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 		],
 	},
@@ -183,7 +183,7 @@ export const organizationFields: INodeProperties[] = [
 		displayName: 'Options',
 		name: 'options',
 		type: 'collection',
-		placeholder: 'Add Option',
+		placeholder: 'Add option',
 		default: {},
 		displayOptions: {
 			show: {
@@ -239,7 +239,7 @@ export const organizationFields: INodeProperties[] = [
 		displayName: 'Options',
 		name: 'options',
 		type: 'collection',
-		placeholder: 'Add Option',
+		placeholder: 'Add option',
 		default: {},
 		displayOptions: {
 			show: {

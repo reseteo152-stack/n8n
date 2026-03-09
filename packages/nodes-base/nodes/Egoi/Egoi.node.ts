@@ -1,6 +1,6 @@
-import { IExecuteFunctions } from 'n8n-core';
-
-import {
+import moment from 'moment-timezone';
+import type {
+	IExecuteFunctions,
 	IDataObject,
 	ILoadOptionsFunctions,
 	INodeExecutionData,
@@ -8,19 +8,17 @@ import {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { egoiApiRequest, egoiApiRequestAllItems, simplify } from './GenericFunctions';
-
-import { ICreateMemberBody } from './Interfaces';
-
-import moment from 'moment-timezone';
+import type { ICreateMemberBody } from './Interfaces';
 
 export class Egoi implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'E-goi',
 		name: 'egoi',
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-icon-not-svg
-		icon: 'file:egoi.png',
+
+		icon: 'file:egoi.svg',
 		group: ['output'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
@@ -28,8 +26,9 @@ export class Egoi implements INodeType {
 		defaults: {
 			name: 'E-goi',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		usableAsTool: true,
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'egoiApi',
@@ -71,10 +70,10 @@ export class Egoi implements INodeType {
 						action: 'Get a member',
 					},
 					{
-						name: 'Get All',
+						name: 'Get Many',
 						value: 'getAll',
-						description: 'Get all members',
-						action: 'Get all members',
+						description: 'Get many members',
+						action: 'Get many members',
 					},
 					{
 						name: 'Update',
@@ -99,7 +98,7 @@ export class Egoi implements INodeType {
 				},
 				default: '',
 				description:
-					'ID of list to operate on. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'ID of list to operate on. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Email',
@@ -190,7 +189,7 @@ export class Egoi implements INodeType {
 										name: 'field_id',
 										type: 'options',
 										description:
-											'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+											'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 										typeOptions: {
 											loadOptionsMethod: 'getExtraFields',
 											loadOptionsDependsOn: ['list'],
@@ -255,7 +254,7 @@ export class Egoi implements INodeType {
 						},
 						default: [],
 						description:
-							'List of tag IDs to be added. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							'List of tag IDs to be added. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 				],
 			},
@@ -318,7 +317,7 @@ export class Egoi implements INodeType {
 										name: 'field_id',
 										type: 'options',
 										description:
-											'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>',
+											'Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 										typeOptions: {
 											loadOptionsMethod: 'getExtraFields',
 											loadOptionsDependsOn: ['list'],
@@ -383,7 +382,7 @@ export class Egoi implements INodeType {
 						},
 						default: [],
 						description:
-							'List of tag IDs to be added. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							'List of tag IDs to be added. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 				],
 			},
@@ -538,11 +537,11 @@ export class Egoi implements INodeType {
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		let responseData;
-		const returnData: IDataObject[] = [];
+		const returnData: INodeExecutionData[] = [];
 		const items = this.getInputData();
 		const length = items.length;
-		const operation = this.getNodeParameter('operation', 0) as string;
-		const resource = this.getNodeParameter('resource', 0) as string;
+		const operation = this.getNodeParameter('operation', 0);
+		const resource = this.getNodeParameter('resource', 0);
 		for (let i = 0; i < length; i++) {
 			try {
 				if (resource === 'contact') {
@@ -551,9 +550,9 @@ export class Egoi implements INodeType {
 
 						const email = this.getNodeParameter('email', i) as string;
 
-						const resolveData = this.getNodeParameter('resolveData', i) as boolean;
+						const resolveData = this.getNodeParameter('resolveData', i);
 
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i);
 
 						const body: ICreateMemberBody = {
 							base: {
@@ -631,7 +630,7 @@ export class Egoi implements INodeType {
 							responseData = responseData.items;
 						}
 
-						if (simple === true) {
+						if (simple) {
 							const data = (await simplify.call(this, [responseData], listId))[0];
 
 							responseData = {
@@ -648,7 +647,7 @@ export class Egoi implements INodeType {
 					if (operation === 'getAll') {
 						const listId = this.getNodeParameter('list', i) as string;
 
-						const returnAll = this.getNodeParameter('returnAll', 0) as boolean;
+						const returnAll = this.getNodeParameter('returnAll', 0);
 
 						const simple = this.getNodeParameter('simple', i) as boolean;
 
@@ -661,7 +660,7 @@ export class Egoi implements INodeType {
 								{},
 							);
 						} else {
-							const limit = this.getNodeParameter('limit', i) as number;
+							const limit = this.getNodeParameter('limit', i);
 
 							responseData = await egoiApiRequest.call(
 								this,
@@ -674,7 +673,7 @@ export class Egoi implements INodeType {
 							responseData = responseData.items;
 						}
 
-						if (simple === true) {
+						if (simple) {
 							responseData = await simplify.call(this, responseData, listId);
 						}
 					}
@@ -682,9 +681,9 @@ export class Egoi implements INodeType {
 					if (operation === 'update') {
 						const listId = this.getNodeParameter('list', i) as string;
 						const contactId = this.getNodeParameter('contactId', i) as string;
-						const resolveData = this.getNodeParameter('resolveData', i) as boolean;
+						const resolveData = this.getNodeParameter('resolveData', i);
 
-						const updateFields = this.getNodeParameter('updateFields', i) as IDataObject;
+						const updateFields = this.getNodeParameter('updateFields', i);
 						const body: ICreateMemberBody = {
 							base: {},
 							extra: [],
@@ -735,23 +734,25 @@ export class Egoi implements INodeType {
 					}
 				}
 			} catch (error) {
-				if (this.continueOnFail() !== true) {
+				if (!this.continueOnFail()) {
 					throw error;
 				} else {
 					// Return the actual reason as error
-					returnData.push({
-						error: error.message,
-					});
+					const executionErrorData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray({ error: error.message }),
+						{ itemData: { item: i } },
+					);
+					returnData.push(...executionErrorData);
 					continue;
 				}
 			}
 
-			if (Array.isArray(responseData)) {
-				returnData.push.apply(returnData, responseData as IDataObject[]);
-			} else {
-				returnData.push(responseData as IDataObject);
-			}
+			const executionData = this.helpers.constructExecutionMetaData(
+				this.helpers.returnJsonArray(responseData as IDataObject[]),
+				{ itemData: { item: i } },
+			);
+			returnData.push(...executionData);
 		}
-		return [this.helpers.returnJsonArray(returnData)];
+		return [returnData];
 	}
 }

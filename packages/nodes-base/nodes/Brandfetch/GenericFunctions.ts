@@ -1,35 +1,30 @@
-import { OptionsWithUri } from 'request';
-
-import {
+import type {
+	IDataObject,
 	IExecuteFunctions,
-	IExecuteSingleFunctions,
 	IHookFunctions,
+	IHttpRequestMethods,
+	IRequestOptions,
 	ILoadOptionsFunctions,
-} from 'n8n-core';
-
-import { IDataObject, NodeApiError, NodeOperationError } from 'n8n-workflow';
+	INodeExecutionData,
+	JsonObject,
+} from 'n8n-workflow';
+import { NodeApiError } from 'n8n-workflow';
 
 export async function brandfetchApiRequest(
-	this: IHookFunctions | IExecuteFunctions | IExecuteSingleFunctions | ILoadOptionsFunctions,
-	method: string,
+	this: IHookFunctions | IExecuteFunctions | ILoadOptionsFunctions,
+	method: IHttpRequestMethods,
 	resource: string,
-	// tslint:disable-next-line:no-any
 	body: any = {},
 	qs: IDataObject = {},
 	uri?: string,
 	option: IDataObject = {},
-	// tslint:disable-next-line:no-any
 ): Promise<any> {
 	try {
-		const credentials = await this.getCredentials('brandfetchApi');
-		let options: OptionsWithUri = {
-			headers: {
-				'x-api-key': credentials.apiKey,
-			},
+		let options: IRequestOptions = {
 			method,
 			qs,
 			body,
-			uri: uri || `https://api.brandfetch.io/v1${resource}`,
+			url: uri || `https://api.brandfetch.io/v2${resource}`,
 			json: true,
 		};
 
@@ -39,21 +34,44 @@ export async function brandfetchApiRequest(
 			delete options.headers;
 		}
 
-		if (!Object.keys(body).length) {
+		if (!Object.keys(body as IDataObject).length) {
 			delete options.body;
 		}
 		if (!Object.keys(qs).length) {
 			delete options.qs;
 		}
 
-		const response = await this.helpers.request!(options);
+		const response = await this.helpers.requestWithAuthentication.call(
+			this,
+			'brandfetchApi',
+			options,
+		);
 
 		if (response.statusCode && response.statusCode !== 200) {
-			throw new NodeApiError(this.getNode(), response);
+			throw new NodeApiError(this.getNode(), response as JsonObject);
 		}
 
 		return response;
 	} catch (error) {
-		throw new NodeApiError(this.getNode(), error);
+		throw new NodeApiError(this.getNode(), error as JsonObject);
 	}
+}
+
+export async function fetchAndPrepareBinaryData(
+	this: IExecuteFunctions,
+	imageType: string,
+	imageFormat: string,
+	logoFormats: IDataObject,
+	domain: string,
+	newItem: INodeExecutionData,
+) {
+	const data = await brandfetchApiRequest.call(this, 'GET', '', {}, {}, logoFormats.src as string, {
+		json: false,
+		encoding: null,
+	});
+
+	newItem.binary![`${imageType}_${imageFormat}`] = await this.helpers.prepareBinaryData(
+		Buffer.from(data),
+		`${imageType}_${domain}.${imageFormat}`,
+	);
 }

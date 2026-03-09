@@ -1,6 +1,4 @@
-import {
-	INodeProperties,
-} from 'n8n-workflow';
+import { SEND_AND_WAIT_OPERATION, type INodeProperties } from 'n8n-workflow';
 
 export const messageOperations: INodeProperties[] = [
 	{
@@ -10,9 +8,7 @@ export const messageOperations: INodeProperties[] = [
 		type: 'options',
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
+				resource: ['message'],
 			},
 		},
 		options: [
@@ -35,6 +31,12 @@ export const messageOperations: INodeProperties[] = [
 				action: 'Get a message',
 			},
 			{
+				name: 'Send and Wait for Response',
+				value: SEND_AND_WAIT_OPERATION,
+				description: 'Send a message and wait for response',
+				action: 'Send message and wait for response',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update a message',
@@ -45,31 +47,31 @@ export const messageOperations: INodeProperties[] = [
 	},
 ];
 
-export const messageFields: INodeProperties[] = [
+export const spaceIdProperty: INodeProperties = {
+	displayName: 'Space Name or ID',
+	name: 'spaceId',
+	type: 'options',
+	required: true,
+	typeOptions: {
+		loadOptionsMethod: 'getSpaces',
+	},
+	default: '',
+	description:
+		'Space resource name, in the form "spaces/*". Example: spaces/AAAAMpdlehY. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+};
 
+export const messageFields: INodeProperties[] = [
 	/* -------------------------------------------------------------------------- */
 	/*                                 message:create                              */
 	/* -------------------------------------------------------------------------- */
 	{
-		displayName: 'Space Name or ID',
-		name: 'spaceId',
-		type: 'options',
-		required: true,
-		typeOptions: {
-			loadOptionsMethod: 'getSpaces',
-		},
+		...spaceIdProperty,
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'create',
-				],
+				resource: ['message'],
+				operation: ['create'],
 			},
 		},
-		default: '',
-		description: 'Space resource name, in the form "spaces/*". Example: spaces/AAAAMpdlehY. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
 	},
 	{
 		displayName: 'JSON Parameters',
@@ -77,12 +79,8 @@ export const messageFields: INodeProperties[] = [
 		type: 'boolean',
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'create',
-				],
+				resource: ['message'],
+				operation: ['create'],
 			},
 		},
 		default: false,
@@ -96,15 +94,9 @@ export const messageFields: INodeProperties[] = [
 		placeholder: 'Add Message',
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'create',
-				],
-				jsonParameters: [
-					false,
-				],
+				resource: ['message'],
+				operation: ['create'],
+				jsonParameters: [false],
 			},
 		},
 		default: {},
@@ -165,20 +157,15 @@ export const messageFields: INodeProperties[] = [
 		],
 	},
 	{
-		displayName: 'See <a href="https://developers.google.com/chat/reference/rest/v1/spaces.messages#Message" target="_blank">Google Chat Guide</a> To Creating Messages',
+		displayName:
+			'See <a href="https://developers.google.com/chat/reference/rest/v1/spaces.messages#Message" target="_blank">Google Chat Guide</a> To Creating Messages',
 		name: 'jsonNotice',
 		type: 'notice',
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'create',
-				],
-				jsonParameters: [
-					true,
-				],
+				resource: ['message'],
+				operation: ['create'],
+				jsonParameters: [true],
 			},
 		},
 		default: '',
@@ -193,15 +180,9 @@ export const messageFields: INodeProperties[] = [
 		},
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'create',
-				],
-				jsonParameters: [
-					true,
-				],
+				resource: ['message'],
+				operation: ['create'],
+				jsonParameters: [true],
 			},
 		},
 		default: '',
@@ -215,12 +196,8 @@ export const messageFields: INodeProperties[] = [
 		default: {},
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'create',
-				],
+				resource: ['message'],
+				operation: ['create'],
 			},
 		},
 		options: [
@@ -236,7 +213,8 @@ export const messageFields: INodeProperties[] = [
 				name: 'requestId',
 				type: 'string',
 				default: '',
-				description: 'A unique request ID for this message. If a message has already been created in the space with this request ID, the subsequent request will return the existing message and no new message will be created.',
+				description:
+					'A unique request ID for this message. If a message has already been created in the space with this request ID, the subsequent request will return the existing message and no new message will be created.',
 			},
 		],
 	},
@@ -251,12 +229,8 @@ export const messageFields: INodeProperties[] = [
 		required: true,
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'delete',
-				],
+				resource: ['message'],
+				operation: ['delete'],
 			},
 		},
 		default: '',
@@ -273,12 +247,8 @@ export const messageFields: INodeProperties[] = [
 		required: true,
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'get',
-				],
+				resource: ['message'],
+				operation: ['get'],
 			},
 		},
 		default: '',
@@ -295,12 +265,8 @@ export const messageFields: INodeProperties[] = [
 		required: true,
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'update',
-				],
+				resource: ['message'],
+				operation: ['update'],
 			},
 		},
 		default: '',
@@ -312,12 +278,8 @@ export const messageFields: INodeProperties[] = [
 		type: 'boolean',
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'update',
-				],
+				resource: ['message'],
+				operation: ['update'],
 			},
 		},
 		default: false,
@@ -328,18 +290,12 @@ export const messageFields: INodeProperties[] = [
 		name: 'updateFieldsUi',
 		type: 'collection',
 		required: true,
-		placeholder: 'Add Options',
+		placeholder: 'Add option',
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'update',
-				],
-				jsonParameters: [
-					false,
-				],
+				resource: ['message'],
+				operation: ['update'],
+				jsonParameters: [false],
 			},
 		},
 		default: {},
@@ -400,20 +356,15 @@ export const messageFields: INodeProperties[] = [
 		],
 	},
 	{
-		displayName: 'See <a href="https://developers.google.com/chat/reference/rest/v1/spaces.messages#Message" target="_blank">Google Chat Guide</a> To Creating Messages',
+		displayName:
+			'See <a href="https://developers.google.com/chat/reference/rest/v1/spaces.messages#Message" target="_blank">Google Chat Guide</a> To Creating Messages',
 		name: 'jsonNotice',
 		type: 'notice',
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'update',
-				],
-				jsonParameters: [
-					true,
-				],
+				resource: ['message'],
+				operation: ['update'],
+				jsonParameters: [true],
 			},
 		},
 		default: '',
@@ -428,15 +379,9 @@ export const messageFields: INodeProperties[] = [
 		},
 		displayOptions: {
 			show: {
-				resource: [
-					'message',
-				],
-				operation: [
-					'update',
-				],
-				jsonParameters: [
-					true,
-				],
+				resource: ['message'],
+				operation: ['update'],
+				jsonParameters: [true],
 			},
 		},
 		default: '',

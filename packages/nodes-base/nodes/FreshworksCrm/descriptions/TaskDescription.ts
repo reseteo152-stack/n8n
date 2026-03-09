@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const taskOperations: INodeProperties[] = [
 	{
@@ -31,10 +31,10 @@ export const taskOperations: INodeProperties[] = [
 				action: 'Get a task',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Retrieve all tasks',
-				action: 'Get all tasks',
+				description: 'Retrieve many tasks',
+				action: 'Get many tasks',
 			},
 			{
 				name: 'Update',
@@ -83,7 +83,7 @@ export const taskFields: INodeProperties[] = [
 		displayName: 'Owner Name or ID',
 		name: 'ownerId',
 		description:
-			'ID of the user to whom the task is assigned. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+			'ID of the user to whom the task is assigned. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		type: 'options',
 		default: '',
 		typeOptions: {
@@ -162,7 +162,7 @@ export const taskFields: INodeProperties[] = [
 					loadOptionsMethod: 'getUsers',
 				},
 				description:
-					'ID of the user who created the task. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'ID of the user who created the task. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Outcome Name or ID',
@@ -173,7 +173,7 @@ export const taskFields: INodeProperties[] = [
 					loadOptionsMethod: 'getOutcomes',
 				},
 				description:
-					'ID of the outcome of the task. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'ID of the outcome of the task. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Task Type ID',
@@ -357,7 +357,7 @@ export const taskFields: INodeProperties[] = [
 					loadOptionsMethod: 'getUsers',
 				},
 				description:
-					'ID of the user who created the sales activity. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'ID of the user who created the sales activity. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Due Date',
@@ -375,7 +375,7 @@ export const taskFields: INodeProperties[] = [
 					loadOptionsMethod: 'getOutcomes',
 				},
 				description:
-					'ID of the outcome of the task. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'ID of the outcome of the task. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Owner Name or ID',
@@ -386,7 +386,7 @@ export const taskFields: INodeProperties[] = [
 					loadOptionsMethod: 'getUsers',
 				},
 				description:
-					'ID of the user to whom the task is assigned. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'ID of the user to whom the task is assigned. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Target ID',

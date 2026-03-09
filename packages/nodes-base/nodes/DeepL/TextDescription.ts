@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const textOperations: INodeProperties[] = [
 	{
@@ -8,9 +8,6 @@ export const textOperations: INodeProperties[] = [
 		default: '',
 		description: 'Input text to translate',
 		required: true,
-		typeOptions: {
-			alwaysOpenEditWindow: true,
-		},
 		displayOptions: {
 			show: {
 				operation: ['translate'],
@@ -26,7 +23,7 @@ export const textOperations: INodeProperties[] = [
 		},
 		default: '',
 		description:
-			'Language to translate to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+			'Language to translate to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		required: true,
 		displayOptions: {
 			show: {
@@ -47,7 +44,7 @@ export const textOperations: INodeProperties[] = [
 				type: 'options',
 				default: '',
 				description:
-					'Language to translate from. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'Language to translate from. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				typeOptions: {
 					loadOptionsMethod: 'getLanguages',
 				},

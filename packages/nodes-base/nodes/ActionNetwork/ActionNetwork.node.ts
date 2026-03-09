@@ -1,23 +1,11 @@
-import { IExecuteFunctions } from 'n8n-core';
-
-import {
+import type {
 	IDataObject,
+	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
-	NodeOperationError,
 } from 'n8n-workflow';
-
-import {
-	actionNetworkApiRequest,
-	adjustEventPayload,
-	adjustPersonPayload,
-	adjustPetitionPayload,
-	handleListing,
-	makeOsdiLink,
-	resourceLoaders,
-	simplifyResponse,
-} from './GenericFunctions';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import {
 	attendanceFields,
@@ -35,8 +23,17 @@ import {
 	tagFields,
 	tagOperations,
 } from './descriptions';
-
 import {
+	actionNetworkApiRequest,
+	adjustEventPayload,
+	adjustPersonPayload,
+	adjustPetitionPayload,
+	handleListing,
+	makeOsdiLink,
+	resourceLoaders,
+	simplifyResponse,
+} from './GenericFunctions';
+import type {
 	AllFieldsUi,
 	EmailAddressUi,
 	Operation,
@@ -57,8 +54,9 @@ export class ActionNetwork implements INodeType {
 		defaults: {
 			name: 'Action Network',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		usableAsTool: true,
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'actionNetworkApi',
@@ -233,9 +231,9 @@ export class ActionNetwork implements INodeType {
 							},
 						} as IDataObject;
 
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i);
 
-						if (Object.keys(additionalFields).length) {
+						if (Object.keys(additionalFields).length && body.person) {
 							Object.assign(body.person, adjustPersonPayload(additionalFields));
 						}
 
@@ -265,7 +263,7 @@ export class ActionNetwork implements INodeType {
 
 						const personId = this.getNodeParameter('personId', i);
 						const body = {} as IDataObject;
-						const updateFields = this.getNodeParameter('updateFields', i) as IDataObject;
+						const updateFields = this.getNodeParameter('updateFields', i);
 
 						if (Object.keys(updateFields).length) {
 							Object.assign(body, adjustPersonPayload(updateFields));
@@ -361,7 +359,7 @@ export class ActionNetwork implements INodeType {
 
 						const body = makeOsdiLink(personId) as IDataObject;
 
-						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i);
 
 						if (Object.keys(additionalFields).length) {
 							Object.assign(body, additionalFields);
@@ -480,11 +478,13 @@ export class ActionNetwork implements INodeType {
 				if (simplify) {
 					response =
 						operation === 'getAll'
-							? response.map((i: Response) => simplifyResponse(i, resource))
-							: simplifyResponse(response, resource);
+							? response.map((entry: Response) => simplifyResponse(entry, resource))
+							: simplifyResponse(response as Response, resource);
 				}
 
-				Array.isArray(response) ? returnData.push(...response) : returnData.push(response);
+				Array.isArray(response)
+					? returnData.push(...(response as IDataObject[]))
+					: returnData.push(response as IDataObject);
 			} catch (error) {
 				if (this.continueOnFail()) {
 					returnData.push({ error: error.message });

@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const postOperations: INodeProperties[] = [
 	{
@@ -27,10 +27,10 @@ export const postOperations: INodeProperties[] = [
 				action: 'Get a post',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get all posts',
-				action: 'Get all posts',
+				description: 'Get many posts',
+				action: 'Get many posts',
 			},
 			{
 				name: 'Update',
@@ -65,9 +65,6 @@ export const postFields: INodeProperties[] = [
 		name: 'content',
 		type: 'string',
 		required: true,
-		typeOptions: {
-			alwaysOpenEditWindow: true,
-		},
 		displayOptions: {
 			show: {
 				resource: ['post'],
@@ -99,7 +96,7 @@ export const postFields: INodeProperties[] = [
 				},
 				default: '',
 				description:
-					'ID of the category. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'ID of the category. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Reply To Post Number',
@@ -191,9 +188,6 @@ export const postFields: INodeProperties[] = [
 		displayName: 'Content',
 		name: 'content',
 		type: 'string',
-		typeOptions: {
-			alwaysOpenEditWindow: true,
-		},
 		required: true,
 		displayOptions: {
 			show: {

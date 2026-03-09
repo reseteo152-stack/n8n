@@ -1,14 +1,15 @@
-import { IHookFunctions, IWebhookFunctions } from 'n8n-core';
+import type {
+	IHookFunctions,
+	IWebhookFunctions,
+	IDataObject,
+	INodeType,
+	INodeTypeDescription,
+	IWebhookResponseData,
+} from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
-import { IDataObject, INodeType, INodeTypeDescription, IWebhookResponseData } from 'n8n-workflow';
-
-import {
-	apiRequest,
-	getFields,
-	getForms,
-	getSubmission,
-	IFormstackWebhookResponseBody,
-} from './GenericFunctions';
+import type { IFormstackWebhookResponseBody } from './GenericFunctions';
+import { apiRequest, getForms } from './GenericFunctions';
 
 export class FormstackTrigger implements INodeType {
 	description: INodeTypeDescription = {
@@ -23,7 +24,7 @@ export class FormstackTrigger implements INodeType {
 			name: 'Formstack Trigger',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'formstackApi',
@@ -79,7 +80,7 @@ export class FormstackTrigger implements INodeType {
 				default: '',
 				required: true,
 				description:
-					'The Formstack form to monitor for new submissions. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'The Formstack form to monitor for new submissions. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Simplify',
@@ -98,7 +99,6 @@ export class FormstackTrigger implements INodeType {
 		},
 	};
 
-	// @ts-ignore
 	webhookMethods = {
 		default: {
 			async checkExists(this: IHookFunctions): Promise<boolean> {
@@ -154,7 +154,7 @@ export class FormstackTrigger implements INodeType {
 						return false;
 					}
 					// Remove from the static workflow data so that it is clear
-					// that no webhooks are registred anymore
+					// that no webhooks are registered anymore
 					delete webhookData.webhookId;
 				}
 
@@ -163,7 +163,6 @@ export class FormstackTrigger implements INodeType {
 		},
 	};
 
-	// @ts-ignore
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
 		const bodyData = this.getBodyData() as unknown as IFormstackWebhookResponseBody;
 		const simple = this.getNodeParameter('simple') as string;

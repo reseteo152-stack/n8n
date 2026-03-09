@@ -1,4 +1,4 @@
-import {
+import type {
 	IAuthenticateGeneric,
 	ICredentialTestRequest,
 	ICredentialType,
@@ -7,16 +7,21 @@ import {
 
 export class WebflowApi implements ICredentialType {
 	name = 'webflowApi';
+
 	displayName = 'Webflow API';
+
 	documentationUrl = 'webflow';
+
 	properties: INodeProperties[] = [
 		{
 			displayName: 'Access Token',
 			name: 'accessToken',
 			type: 'string',
+			typeOptions: { password: true },
 			default: '',
 		},
 	];
+
 	authenticate: IAuthenticateGeneric = {
 		type: 'generic',
 		properties: {
@@ -25,10 +30,11 @@ export class WebflowApi implements ICredentialType {
 			},
 		},
 	};
+
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: 'https://api.webflow.com',
-			url: '/sites',
+			url: '/v2/sites',
 		},
 	};
 }

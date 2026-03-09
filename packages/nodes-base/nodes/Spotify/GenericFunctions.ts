@@ -1,43 +1,35 @@
-import {
-	OptionsWithUri,
-} from 'request';
-
-import {
+import get from 'lodash/get';
+import type {
+	IDataObject,
 	IExecuteFunctions,
 	IHookFunctions,
-} from 'n8n-core';
-
-import {
-	IDataObject,
-	NodeApiError,
-	NodeOperationError,
+	JsonObject,
+	IHttpRequestMethods,
+	IHttpRequestOptions,
 } from 'n8n-workflow';
-
-import {
-	get,
-} from 'lodash';
+import { NodeApiError } from 'n8n-workflow';
 
 /**
  * Make an API request to Spotify
  *
- * @param {IHookFunctions} this
- * @param {string} method
- * @param {string} url
- * @param {object} body
- * @returns {Promise<any>}
  */
-export async function spotifyApiRequest(this: IHookFunctions | IExecuteFunctions,
-	method: string, endpoint: string, body: object, query?: object, uri?: string): Promise<any> { // tslint:disable-line:no-any
-
-	const options: OptionsWithUri = {
+export async function spotifyApiRequest(
+	this: IHookFunctions | IExecuteFunctions,
+	method: IHttpRequestMethods,
+	endpoint: string,
+	body: object,
+	query?: IDataObject,
+	uri?: string,
+): Promise<any> {
+	const options: IHttpRequestOptions = {
 		method,
 		headers: {
 			'User-Agent': 'n8n',
 			'Content-Type': 'text/plain',
-			'Accept': ' application/json',
+			Accept: ' application/json',
 		},
 		qs: query,
-		uri: uri || `https://api.spotify.com/v1${endpoint}`,
+		url: uri ?? `https://api.spotify.com/v1${endpoint}`,
 		json: true,
 	};
 
@@ -45,15 +37,20 @@ export async function spotifyApiRequest(this: IHookFunctions | IExecuteFunctions
 		options.body = body;
 	}
 	try {
-		return await this.helpers.requestOAuth2.call(this, 'spotifyOAuth2Api', options);
+		return await this.helpers.httpRequestWithAuthentication.call(this, 'spotifyOAuth2Api', options);
 	} catch (error) {
-		throw new NodeApiError(this.getNode(), error);
+		throw new NodeApiError(this.getNode(), error as JsonObject);
 	}
 }
 
-export async function spotifyApiRequestAllItems(this: IHookFunctions | IExecuteFunctions,
-	propertyName: string, method: string, endpoint: string, body: object, query?: object): Promise<any> { // tslint:disable-line:no-any
-
+export async function spotifyApiRequestAllItems(
+	this: IHookFunctions | IExecuteFunctions,
+	propertyName: string,
+	method: IHttpRequestMethods,
+	endpoint: string,
+	body: object,
+	query?: IDataObject,
+): Promise<any> {
 	const returnData: IDataObject[] = [];
 
 	let responseData;
@@ -62,6 +59,7 @@ export async function spotifyApiRequestAllItems(this: IHookFunctions | IExecuteF
 
 	do {
 		responseData = await spotifyApiRequest.call(this, method, endpoint, body, query, uri);
+
 		returnData.push.apply(returnData, get(responseData, propertyName));
 		uri = responseData.next || responseData[propertyName.split('.')[0]].next;
 		//remove the query as the query parameters are already included in the next, else api throws error.
@@ -71,8 +69,9 @@ export async function spotifyApiRequestAllItems(this: IHookFunctions | IExecuteF
 			return returnData;
 		}
 	} while (
-		(responseData['next'] !== null && responseData['next'] !== undefined) ||
-		(responseData[propertyName.split('.')[0]].next !== null && responseData[propertyName.split('.')[0]].next !== undefined)
+		(responseData.next !== null && responseData.next !== undefined) ||
+		(responseData[propertyName.split('.')[0]].next !== null &&
+			responseData[propertyName.split('.')[0]].next !== undefined)
 	);
 
 	return returnData;

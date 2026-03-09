@@ -1,37 +1,29 @@
 import {
-	IExecuteFunctions,
-} from 'n8n-core';
-
-import {
-	IDataObject,
-	ILoadOptionsFunctions,
-	INodeExecutionData,
-	INodePropertyOptions,
-	INodeType,
-	INodeTypeDescription,
+	type IExecuteFunctions,
+	type IDataObject,
+	type ILoadOptionsFunctions,
+	type INodeExecutionData,
+	type INodePropertyOptions,
+	type INodeType,
+	type INodeTypeDescription,
+	NodeConnectionTypes,
 } from 'n8n-workflow';
 
+import { companyOperations } from './CompanyDescription';
+import type { Metrics } from './GenericFunctions';
 import {
 	profitWellApiRequest,
 	simplifyDailyMetrics,
 	simplifyMontlyMetrics,
 } from './GenericFunctions';
-
-import {
-	companyOperations,
-} from './CompanyDescription';
-
-import {
-	metricFields,
-	metricOperations,
-} from './MetricDescription';
+import { metricFields, metricOperations } from './MetricDescription';
 
 export class ProfitWell implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'ProfitWell',
 		name: 'profitWell',
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-icon-not-svg
-		icon: 'file:profitwell.png',
+
+		icon: { light: 'file:profitwell.svg', dark: 'file:profitwell.dark.svg' },
 		group: ['output'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
@@ -39,8 +31,9 @@ export class ProfitWell implements INodeType {
 		defaults: {
 			name: 'ProfitWell',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		usableAsTool: true,
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'profitWellApi',
@@ -75,15 +68,9 @@ export class ProfitWell implements INodeType {
 
 	methods = {
 		loadOptions: {
-			async getPlanIds(
-				this: ILoadOptionsFunctions,
-			): Promise<INodePropertyOptions[]> {
+			async getPlanIds(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const returnData: INodePropertyOptions[] = [];
-				const planIds = await profitWellApiRequest.call(
-					this,
-					'GET',
-					'/metrics/plans',
-				);
+				const planIds = await profitWellApiRequest.call(this, 'GET', '/metrics/plans');
 				for (const planId of planIds.plan_ids) {
 					returnData.push({
 						name: planId,
@@ -101,13 +88,13 @@ export class ProfitWell implements INodeType {
 		const length = items.length;
 		const qs: IDataObject = {};
 		let responseData;
-		const resource = this.getNodeParameter('resource', 0) as string;
-		const operation = this.getNodeParameter('operation', 0) as string;
+		const resource = this.getNodeParameter('resource', 0);
+		const operation = this.getNodeParameter('operation', 0);
 		for (let i = 0; i < length; i++) {
 			try {
 				if (resource === 'company') {
 					if (operation === 'getSetting') {
-						responseData = await profitWellApiRequest.call(this, 'GET', `/company/settings/`);
+						responseData = await profitWellApiRequest.call(this, 'GET', '/company/settings/');
 					}
 				}
 				if (resource === 'metric') {
@@ -119,7 +106,7 @@ export class ProfitWell implements INodeType {
 						if (type === 'daily') {
 							qs.month = this.getNodeParameter('month', i) as string;
 						}
-						const options = this.getNodeParameter('options', i) as IDataObject;
+						const options = this.getNodeParameter('options', i);
 
 						Object.assign(qs, options);
 
@@ -134,9 +121,9 @@ export class ProfitWell implements INodeType {
 						}
 
 						responseData = await profitWellApiRequest.call(this, 'GET', `/metrics/${type}`, {}, qs);
-						responseData = responseData.data;
+						responseData = responseData.data as Metrics;
 
-						if (simple === true) {
+						if (simple) {
 							if (type === 'daily') {
 								responseData = simplifyDailyMetrics(responseData);
 							} else {

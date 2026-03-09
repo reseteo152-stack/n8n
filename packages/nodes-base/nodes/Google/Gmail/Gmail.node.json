@@ -2,18 +2,19 @@
 	"node": "n8n-nodes-base.gmail",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
-	"categories": [
-		"Communication"
-	],
+	"categories": ["Communication", "HITL"],
+	"subcategories": {
+		"HITL": ["Human in the Loop"]
+	},
 	"resources": {
 		"credentialDocumentation": [
 			{
-				"url": "https://docs.n8n.io/credentials/google"
+				"url": "https://docs.n8n.io/integrations/builtin/credentials/google/oauth-single-service/"
 			}
 		],
 		"primaryDocumentation": [
 			{
-				"url": "https://docs.n8n.io/nodes/n8n-nodes-base.gmail/"
+				"url": "https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.gmail/"
 			}
 		],
 		"generic": [
@@ -53,5 +54,6 @@
 				"url": "https://n8n.io/blog/using-automation-to-boost-productivity-in-the-workplace/"
 			}
 		]
-	}
+	},
+	"alias": ["email", "human", "form", "wait", "hitl", "approval"]
 }

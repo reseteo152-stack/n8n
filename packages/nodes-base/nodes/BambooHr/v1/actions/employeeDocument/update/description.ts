@@ -1,4 +1,4 @@
-import { EmployeeDocumentProperties } from '../../Interfaces';
+import type { EmployeeDocumentProperties } from '../../Interfaces';
 
 export const employeeDocumentUpdateDescription: EmployeeDocumentProperties = [
 	{
@@ -50,7 +50,7 @@ export const employeeDocumentUpdateDescription: EmployeeDocumentProperties = [
 				},
 				default: '',
 				description:
-					'ID of the new category of the file. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'ID of the new category of the file. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Name',

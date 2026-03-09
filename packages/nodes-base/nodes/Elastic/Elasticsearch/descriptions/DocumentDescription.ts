@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 import * as placeholders from './placeholders';
 
@@ -33,10 +33,10 @@ export const documentOperations: INodeProperties[] = [
 				action: 'Get a document',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get all documents',
-				action: 'Get all documents',
+				description: 'Get many documents',
+				action: 'Get many documents',
 			},
 			{
 				name: 'Update',
@@ -80,6 +80,28 @@ export const documentFields: INodeProperties[] = [
 				operation: ['delete'],
 			},
 		},
+	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['document'],
+				operation: ['delete'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Bulk Delete',
+				name: 'bulkOperation',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to use the bulk operation to delete the document/s',
+			},
+		],
 	},
 
 	// ----------------------------------------
@@ -130,7 +152,7 @@ export const documentFields: INodeProperties[] = [
 		displayName: 'Options',
 		name: 'options',
 		type: 'collection',
-		placeholder: 'Add Option',
+		placeholder: 'Add option',
 		default: {},
 		displayOptions: {
 			show: {
@@ -195,6 +217,20 @@ export const documentFields: INodeProperties[] = [
 		},
 	},
 	{
+		displayName:
+			'By default, you cannot page through more than 10,000 hits. To page through more hits, add "Sort" from options.',
+		name: 'paginateNotice',
+		type: 'notice',
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['document'],
+				operation: ['getAll'],
+				returnAll: [true],
+			},
+		},
+	},
+	{
 		displayName: 'Limit',
 		name: 'limit',
 		type: 'number',
@@ -228,7 +264,7 @@ export const documentFields: INodeProperties[] = [
 		displayName: 'Options',
 		name: 'options',
 		type: 'collection',
-		placeholder: 'Add Option',
+		placeholder: 'Add option',
 		default: {},
 		displayOptions: {
 			show: {
@@ -631,6 +667,13 @@ export const documentFields: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Bulk Create',
+				name: 'bulkOperation',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to use the bulk operation to create the document/s',
+			},
+			{
 				displayName: 'Pipeline ID',
 				name: 'pipeline',
 				description: 'ID of the pipeline to use to preprocess incoming documents',
@@ -788,6 +831,13 @@ export const documentFields: INodeProperties[] = [
 			},
 		},
 		options: [
+			{
+				displayName: 'Bulk Update',
+				name: 'bulkOperation',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to use the bulk operation to update the document/s',
+			},
 			{
 				displayName: 'Refresh',
 				name: 'refresh',

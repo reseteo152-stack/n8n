@@ -1,4 +1,4 @@
-import {
+import type {
 	IAuthenticateGeneric,
 	ICredentialTestRequest,
 	ICredentialType,
@@ -7,8 +7,11 @@ import {
 
 export class ElasticsearchApi implements ICredentialType {
 	name = 'elasticsearchApi';
+
 	displayName = 'Elasticsearch API';
+
 	documentationUrl = 'elasticsearch';
+
 	properties: INodeProperties[] = [
 		{
 			displayName: 'Username',
@@ -34,7 +37,7 @@ export class ElasticsearchApi implements ICredentialType {
 			description: "Referred to as Elasticsearch 'endpoint' in the Elastic deployment dashboard",
 		},
 		{
-			displayName: 'Ignore SSL Issues',
+			displayName: 'Ignore SSL Issues (Insecure)',
 			name: 'ignoreSSLIssues',
 			type: 'boolean',
 			default: false,
@@ -48,14 +51,14 @@ export class ElasticsearchApi implements ICredentialType {
 				username: '={{$credentials.username}}',
 				password: '={{$credentials.password}}',
 			},
-			skipSslCertificateValidation: '={{$credentials.ignoreSSLIssues}}',
 		},
 	};
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: '={{$credentials.baseUrl}}',
+			baseURL: '={{$credentials.baseUrl}}'.replace(/\/$/, ''),
 			url: '/_xpack?human=false',
+			skipSslCertificateValidation: '={{$credentials.ignoreSSLIssues}}',
 		},
 	};
 }

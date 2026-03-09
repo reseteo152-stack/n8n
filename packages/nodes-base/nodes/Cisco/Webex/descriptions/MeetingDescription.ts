@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const meetingOperations: INodeProperties[] = [
 	{
@@ -28,9 +28,9 @@ export const meetingOperations: INodeProperties[] = [
 				action: 'Get a meeting',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				action: 'Get all meetings',
+				action: 'Get many meetings',
 			},
 			{
 				name: 'Update',
@@ -167,6 +167,7 @@ export const meetingFields: INodeProperties[] = [
 			{
 				displayName: 'Exclude Password',
 				name: 'excludePassword',
+
 				type: 'boolean',
 				default: false,
 				description: 'Whether or not to exclude password from the meeting email invitation',
@@ -355,7 +356,7 @@ export const meetingFields: INodeProperties[] = [
 				},
 				default: '',
 				description:
-					'URL of the Webex site which the meeting is created on. If not specified, the meeting is created on user\'s preferred site. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'URL of the Webex site which the meeting is created on. If not specified, the meeting is created on user\'s preferred site. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 		],
 	},
@@ -381,7 +382,7 @@ export const meetingFields: INodeProperties[] = [
 		displayName: 'Options',
 		name: 'options',
 		type: 'collection',
-		placeholder: 'Add Option',
+		placeholder: 'Add option',
 		default: {},
 		displayOptions: {
 			show: {
@@ -429,7 +430,7 @@ export const meetingFields: INodeProperties[] = [
 		displayName: 'Options',
 		name: 'options',
 		type: 'collection',
-		placeholder: 'Add Option',
+		placeholder: 'Add option',
 		default: {},
 		displayOptions: {
 			show: {
@@ -450,6 +451,7 @@ export const meetingFields: INodeProperties[] = [
 				displayName: 'Password',
 				name: 'password',
 				type: 'string',
+				typeOptions: { password: true },
 				default: '',
 				description:
 					"Meeting password. It's required when the meeting is protected by a password and the current user is not privileged to view it if they are not a host, co-host or invitee of the meeting.",
@@ -589,7 +591,7 @@ export const meetingFields: INodeProperties[] = [
 				},
 				default: '',
 				description:
-					'URL of the Webex site which the API lists meetings from. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'URL of the Webex site which the API lists meetings from. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'State',
@@ -745,6 +747,7 @@ export const meetingFields: INodeProperties[] = [
 			{
 				displayName: 'Exclude Password',
 				name: 'excludePassword',
+
 				type: 'boolean',
 				default: false,
 				description: 'Whether or not to exclude password from the meeting email invitation',
@@ -828,6 +831,7 @@ export const meetingFields: INodeProperties[] = [
 				displayName: 'Password',
 				name: 'password',
 				type: 'string',
+				typeOptions: { password: true },
 				default: '',
 				description:
 					"Meeting password. Must conform to the site's password complexity settings. If not specified, a random password conforming to the site's password rules will be generated automatically",
@@ -935,7 +939,7 @@ export const meetingFields: INodeProperties[] = [
 				},
 				default: '',
 				description:
-					'URL of the Webex site which the meeting is created on. If not specified, the meeting is created on user\'s preferred site. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'URL of the Webex site which the meeting is created on. If not specified, the meeting is created on user\'s preferred site. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Start',

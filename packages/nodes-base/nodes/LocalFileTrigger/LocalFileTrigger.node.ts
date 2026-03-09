@@ -1,19 +1,20 @@
-import { ITriggerFunctions } from 'n8n-core';
-import {
-	IDataObject,
-	INodeType,
-	INodeTypeDescription,
-	ITriggerResponse,
-} from 'n8n-workflow';
-
 import { watch } from 'chokidar';
-
+import type { EventName } from 'chokidar/handler';
+import {
+	type ITriggerFunctions,
+	type IDataObject,
+	type INodeType,
+	type INodeTypeDescription,
+	type ITriggerResponse,
+	NodeConnectionTypes,
+} from 'n8n-workflow';
 
 export class LocalFileTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Local File Trigger',
 		name: 'localFileTrigger',
 		icon: 'fa:folder-open',
+		iconColor: 'black',
 		group: ['trigger'],
 		version: 1,
 		subtitle: '=Path: {{$parameter["path"]}}',
@@ -23,8 +24,19 @@ export class LocalFileTrigger implements INodeType {
 			name: 'Local File Trigger',
 			color: '#404040',
 		},
+		triggerPanel: {
+			header: '',
+			executionsHelp: {
+				inactive:
+					"<b>While building your workflow</b>, click the 'execute step' button, then make a change to your watched file or folder. This will trigger an execution, which will show up in this editor.<br /> <br /><b>Once you're happy with your workflow</b>, publish it. Then every time a change is detected, the workflow will execute. These executions will show up in the <a data-key='executions'>executions list</a>, but not in the editor.",
+				active:
+					"<b>While building your workflow</b>, click the 'execute step' button, then make a change to your watched file or folder. This will trigger an execution, which will show up in this editor.<br /> <br /><b>Your workflow will also execute automatically</b>, since it's activated. Every time a change is detected, this node will trigger an execution. These executions will show up in the <a data-key='executions'>executions list</a>, but not in the editor.",
+			},
+			activationHint:
+				'Once you’ve finished building your workflow, publish it to have it also listen continuously (you just won’t see those executions here).',
+		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		properties: [
 			{
 				displayName: 'Trigger On',
@@ -49,9 +61,7 @@ export class LocalFileTrigger implements INodeType {
 				type: 'string',
 				displayOptions: {
 					show: {
-						triggerOn: [
-							'file',
-						],
+						triggerOn: ['file'],
 					},
 				},
 				default: '',
@@ -63,9 +73,7 @@ export class LocalFileTrigger implements INodeType {
 				type: 'string',
 				displayOptions: {
 					show: {
-						triggerOn: [
-							'folder',
-						],
+						triggerOn: ['folder'],
 					},
 				},
 				default: '',
@@ -77,9 +85,7 @@ export class LocalFileTrigger implements INodeType {
 				type: 'multiOptions',
 				displayOptions: {
 					show: {
-						triggerOn: [
-							'folder',
-						],
+						triggerOn: ['folder'],
 					},
 				},
 				options: [
@@ -118,25 +124,40 @@ export class LocalFileTrigger implements INodeType {
 				displayName: 'Options',
 				name: 'options',
 				type: 'collection',
-				placeholder: 'Add Option',
+				placeholder: 'Add option',
 				default: {},
 				options: [
+					{
+						displayName: 'Await Write Finish',
+						name: 'awaitWriteFinish',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to wait until files finished writing to avoid partially read',
+					},
 					{
 						displayName: 'Include Linked Files/Folders',
 						name: 'followSymlinks',
 						type: 'boolean',
 						default: true,
-						description: 'Whether linked files/folders will also be watched (this includes symlinks, aliases on MacOS and shortcuts on Windows). Otherwise only the links themselves will be monitored).',
+						description:
+							'Whether linked files/folders will also be watched (this includes symlinks, aliases on MacOS and shortcuts on Windows). Otherwise only the links themselves will be monitored).',
 					},
 					{
 						displayName: 'Ignore',
 						name: 'ignored',
 						type: 'string',
 						default: '',
-						placeholder: '**/*.txt',
-						description: 'Files or paths to ignore. The whole path is tested, not just the filename. Supports <a href="https://github.com/micromatch/anymatch">Anymatch</a>- syntax.',
+						placeholder: '**/*.txt or ignore-me/subfolder',
+						description:
+							"Files or paths to ignore. The whole path is tested, not just the filename. Supports <a href=\"https://github.com/micromatch/anymatch\">Anymatch</a>- syntax. Regex patterns may not work on macOS. To ignore files based on substring matching, use the 'Ignore Mode' option with 'Contain'.",
 					},
-					// eslint-disable-next-line n8n-nodes-base/node-param-default-missing
+					{
+						displayName: 'Ignore Existing Files/Folders',
+						name: 'ignoreInitial',
+						type: 'boolean',
+						default: true,
+						description: 'Whether to ignore existing files/folders to not trigger an event',
+					},
 					{
 						displayName: 'Max Folder Depth',
 						name: 'depth',
@@ -174,48 +195,80 @@ export class LocalFileTrigger implements INodeType {
 						default: -1,
 						description: 'How deep into the folder structure to watch for changes',
 					},
+					{
+						displayName: 'Use Polling',
+						name: 'usePolling',
+						type: 'boolean',
+						default: false,
+						description:
+							'Whether to use polling for watching. Typically necessary to successfully watch files over a network.',
+					},
+					{
+						displayName: 'Ignore Mode',
+						name: 'ignoreMode',
+						type: 'options',
+						options: [
+							{
+								name: 'Match',
+								value: 'match',
+								description:
+									'Ignore files using regex patterns (e.g., **/*.txt), Not supported on macOS',
+							},
+							{
+								name: 'Contain',
+								value: 'contain',
+								description: 'Ignore files if their path contains the specified value',
+							},
+						],
+						default: 'match',
+						description:
+							'Whether to ignore files using regex matching (Anymatch patterns) or by checking if the path contains a specified value',
+					},
 				],
 			},
-
 		],
 	};
-
 
 	async trigger(this: ITriggerFunctions): Promise<ITriggerResponse> {
 		const triggerOn = this.getNodeParameter('triggerOn') as string;
 		const path = this.getNodeParameter('path') as string;
 		const options = this.getNodeParameter('options', {}) as IDataObject;
 
-		let events: string[];
+		let events: EventName[];
 		if (triggerOn === 'file') {
-			events = [ 'change' ];
+			events = ['change'];
 		} else {
-			events = this.getNodeParameter('events', []) as string[];
+			events = this.getNodeParameter('events', []) as EventName[];
 		}
-
+		const ignored = options.ignored === '' ? undefined : (options.ignored as string);
 		const watcher = watch(path, {
-			ignored: options.ignored,
+			ignored: options.ignoreMode === 'match' ? ignored : (x) => x.includes(ignored as string),
 			persistent: true,
-			ignoreInitial: true,
-			followSymlinks: options.followSymlinks === undefined ? true : options.followSymlinks as boolean,
-			depth: [-1, undefined].includes(options.depth as number) ? undefined : options.depth as number,
+			ignoreInitial:
+				options.ignoreInitial === undefined ? true : (options.ignoreInitial as boolean),
+			followSymlinks:
+				options.followSymlinks === undefined ? true : (options.followSymlinks as boolean),
+			depth: [-1, undefined].includes(options.depth as number)
+				? undefined
+				: (options.depth as number),
+			usePolling: options.usePolling as boolean,
+			awaitWriteFinish: options.awaitWriteFinish as boolean,
 		});
 
-		const executeTrigger = (event: string, path: string) => {
-			this.emit([this.helpers.returnJsonArray([{ event,path }])]);
+		const executeTrigger = (event: string, pathString: string) => {
+			this.emit([this.helpers.returnJsonArray([{ event, path: pathString }])]);
 		};
 
 		for (const eventName of events) {
-			watcher.on(eventName, path => executeTrigger(eventName, path));
+			watcher.on(eventName, (pathString: string) => executeTrigger(eventName, pathString));
 		}
 
-		function closeFunction() {
-			return watcher.close();
+		async function closeFunction() {
+			return await watcher.close();
 		}
 
 		return {
 			closeFunction,
 		};
-
 	}
 }

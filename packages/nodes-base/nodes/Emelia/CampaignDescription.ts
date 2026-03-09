@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const campaignOperations: INodeProperties[] = [
 	{
@@ -29,9 +29,9 @@ export const campaignOperations: INodeProperties[] = [
 				action: 'Get a campaign',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				action: 'Get all campaigns',
+				action: 'Get many campaigns',
 			},
 			{
 				name: 'Pause',
@@ -66,7 +66,7 @@ export const campaignFields: INodeProperties[] = [
 		default: [],
 		required: true,
 		description:
-			'The ID of the campaign to add the contact to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+			'The ID of the campaign to add the contact to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['campaign'],
@@ -303,7 +303,7 @@ export const campaignFields: INodeProperties[] = [
 		default: '',
 		required: true,
 		description:
-			'The ID of the campaign to duplicate. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+			'The ID of the campaign to duplicate. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		typeOptions: {
 			loadOptionsMethod: 'getCampaigns',
 		},

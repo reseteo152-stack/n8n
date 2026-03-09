@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const announcementOperations: INodeProperties[] = [
 	{
@@ -31,10 +31,10 @@ export const announcementOperations: INodeProperties[] = [
 				action: 'Get an announcement',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Retrieve all announcements',
-				action: 'Get all announcements',
+				description: 'Retrieve many announcements',
+				action: 'Get many announcements',
 			},
 			{
 				name: 'Update',
@@ -146,7 +146,7 @@ export const announcementFields: INodeProperties[] = [
 				type: 'multiOptions',
 				default: [],
 				description:
-					'Comma-separated IDs of departments that may view this announcement. Choose from the list or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'Comma-separated IDs of departments that may view this announcement. Choose from the list or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				typeOptions: {
 					loadOptionsMethod: 'getDepartments',
 				},
@@ -289,7 +289,7 @@ export const announcementFields: INodeProperties[] = [
 				type: 'multiOptions',
 				default: [],
 				description:
-					'Comma-separated IDs of departments that may view this announcement. Choose from the list or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'Comma-separated IDs of departments that may view this announcement. Choose from the list or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>. Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				typeOptions: {
 					loadOptionsMethod: 'getDepartments',
 				},

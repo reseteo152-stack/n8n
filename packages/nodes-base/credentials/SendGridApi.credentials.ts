@@ -1,4 +1,4 @@
-import {
+import type {
 	IAuthenticateGeneric,
 	ICredentialTestRequest,
 	ICredentialType,
@@ -7,16 +7,21 @@ import {
 
 export class SendGridApi implements ICredentialType {
 	name = 'sendGridApi';
+
 	displayName = 'SendGrid API';
+
 	documentationUrl = 'sendgrid';
+
 	properties: INodeProperties[] = [
 		{
 			displayName: 'API Key',
 			name: 'apiKey',
 			type: 'string',
+			typeOptions: { password: true },
 			default: '',
 		},
 	];
+
 	authenticate: IAuthenticateGeneric = {
 		type: 'generic',
 		properties: {
@@ -29,7 +34,7 @@ export class SendGridApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: 'https://api.sendgrid.com/v3',
-			url: '/marketing/contacts',
+			url: '/scopes',
 		},
 	};
 }

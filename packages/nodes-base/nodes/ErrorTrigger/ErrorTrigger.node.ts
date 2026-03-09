@@ -1,11 +1,19 @@
-import { IExecuteFunctions } from 'n8n-core';
-import { INodeExecutionData, INodeType, INodeTypeDescription } from 'n8n-workflow';
+import type {
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeType,
+	INodeTypeDescription,
+	ITriggerFunctions,
+	ITriggerResponse,
+} from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 export class ErrorTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Error Trigger',
 		name: 'errorTrigger',
 		icon: 'fa:bug',
+		iconColor: 'blue',
 		group: ['trigger'],
 		version: 1,
 		description: 'Triggers the workflow when another workflow has an error',
@@ -17,17 +25,23 @@ export class ErrorTrigger implements INodeType {
 			color: '#0000FF',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		properties: [
 			{
 				displayName:
-					'This node will trigger when there is an error in another workflow, as long as that workflow is set up to do so. <a href="https://docs.n8n.io/integrations/core-nodes/n8n-nodes-base.errortrigger" target="_blank">More info<a>',
+					'This node will trigger when there is an error in another workflow, as long as that workflow is set up to do so. <a href="https://docs.n8n.io/integrations/core-nodes/n8n-nodes-base.errortrigger" target="_blank">More info</a>',
 				name: 'notice',
 				type: 'notice',
 				default: '',
 			},
 		],
 	};
+
+	async trigger(this: ITriggerFunctions): Promise<ITriggerResponse> {
+		// ErrorTrigger is triggered by n8n's error handling system
+		// No setup or teardown is required, as the triggering is handled externally
+		return {};
+	}
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
@@ -54,7 +68,7 @@ export class ErrorTrigger implements INodeType {
 			items[0].json = {
 				execution: {
 					id,
-					url: `${urlParts.join('/')}/${id}`,
+					url: `${urlParts.join('/')}/workflow/1/${id}`,
 					retryOf: '34',
 					error: {
 						message: 'Example Error Message',
@@ -70,6 +84,6 @@ export class ErrorTrigger implements INodeType {
 			};
 		}
 
-		return this.prepareOutputData(items);
+		return [items];
 	}
 }

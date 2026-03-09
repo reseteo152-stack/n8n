@@ -1,15 +1,16 @@
-import {
+import type {
+	IExecuteFunctions,
 	IDataObject,
 	ILoadOptionsFunctions,
 	INodeExecutionData,
 	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
-	NodeOperationError,
 } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
-import { IExecuteFunctions } from 'n8n-core';
-
+import { contactFields, contactOperations } from './ContactDescription';
+import type { ICreateContactBody } from './ContactInterface';
 import {
 	capitalize,
 	freshdeskApiRequest,
@@ -17,33 +18,37 @@ import {
 	// validateJSON,
 } from './GenericFunctions';
 
-import { ICreateContactBody } from './ContactInterface';
+const Status = {
+	Open: 2,
+	Pending: 3,
+	Resolved: 4,
+	Closed: 5,
+} as const;
 
-import { contactFields, contactOperations } from './ContactDescription';
+const Priority = {
+	Low: 1,
+	Medium: 2,
+	High: 3,
+	Urgent: 4,
+} as const;
 
-enum Status {
-	Open = 2,
-	Pending = 3,
-	Resolved = 4,
-	Closed = 5,
-}
+const Source = {
+	Email: 1,
+	Portal: 2,
+	Phone: 3,
+	Chat: 7,
+	Mobihelp: 8,
+	FeedbackWidget: 9,
+	OutboundEmail: 10,
+} as const;
 
-enum Priority {
-	Low = 1,
-	Medium = 2,
-	High = 3,
-	Urgent = 4,
-}
+type StatusKey = keyof typeof Status;
+type PriorityKey = keyof typeof Priority;
+type SourceKey = keyof typeof Source;
 
-enum Source {
-	Email = 1,
-	Portal = 2,
-	Phone = 3,
-	Chat = 7,
-	Mobihelp = 8,
-	FeedbackWidget = 9,
-	OutboundEmail = 10,
-}
+type StatusValue = (typeof Status)[keyof typeof Status];
+type PriorityValue = (typeof Priority)[keyof typeof Priority];
+type SourceValue = (typeof Source)[keyof typeof Source];
 
 interface ICreateTicketBody {
 	name?: string;
@@ -55,8 +60,8 @@ interface ICreateTicketBody {
 	unique_external_id?: string;
 	subject?: string | null;
 	type?: string;
-	status?: Status;
-	priority?: Priority;
+	status?: StatusValue;
+	priority?: PriorityValue;
 	description?: string;
 	responder_id?: number;
 	cc_emails?: [string];
@@ -66,7 +71,7 @@ interface ICreateTicketBody {
 	fr_due_by?: string;
 	group_id?: number;
 	product_id?: number;
-	source?: Source;
+	source?: SourceValue;
 	tags?: [string];
 	company_id?: number;
 }
@@ -75,8 +80,8 @@ export class Freshdesk implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Freshdesk',
 		name: 'freshdesk',
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-icon-not-svg
-		icon: 'file:freshdesk.png',
+
+		icon: 'file:freshdesk.svg',
 		group: ['output'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
@@ -84,8 +89,9 @@ export class Freshdesk implements INodeType {
 		defaults: {
 			name: 'Freshdesk',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		usableAsTool: true,
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'freshdeskApi',
@@ -142,10 +148,10 @@ export class Freshdesk implements INodeType {
 						action: 'Get a ticket',
 					},
 					{
-						name: 'Get All',
+						name: 'Get Many',
 						value: 'getAll',
-						description: 'Get all tickets',
-						action: 'Get all tickets',
+						description: 'Get many tickets',
+						action: 'Get many tickets',
 					},
 					{
 						name: 'Update',
@@ -348,7 +354,7 @@ export class Freshdesk implements INodeType {
 				displayName: 'Options',
 				name: 'options',
 				type: 'collection',
-				placeholder: 'Add Option',
+				placeholder: 'Add option',
 				default: {},
 				displayOptions: {
 					show: {
@@ -366,7 +372,7 @@ export class Freshdesk implements INodeType {
 							loadOptionsMethod: 'getAgents',
 						},
 						description:
-							'ID of the agent to whom the ticket has been assigned. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							'ID of the agent to whom the ticket has been assigned. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 					{
 						displayName: 'CC Emails',
@@ -385,7 +391,7 @@ export class Freshdesk implements INodeType {
 							loadOptionsMethod: 'getCompanies',
 						},
 						description:
-							'Company ID of the requester. This attribute can only be set if the Multiple Companies feature is enabled (Estate plan and above). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							'Company ID of the requester. This attribute can only be set if the Multiple Companies feature is enabled (Estate plan and above). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 					{
 						displayName: 'Description',
@@ -394,7 +400,6 @@ export class Freshdesk implements INodeType {
 						default: '',
 						typeOptions: {
 							rows: 5,
-							alwaysOpenEditWindow: true,
 						},
 						description: 'HTML content of the ticket',
 					},
@@ -429,7 +434,7 @@ export class Freshdesk implements INodeType {
 							loadOptionsMethod: 'getGroups',
 						},
 						description:
-							'ID of the group to which the ticket has been assigned. The default value is the ID of the group that is associated with the given email_config_id. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							'ID of the group to which the ticket has been assigned. The default value is the ID of the group that is associated with the given email_config_id. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 					{
 						displayName: 'Name',
@@ -448,7 +453,7 @@ export class Freshdesk implements INodeType {
 							loadOptionsMethod: 'getProducts',
 						},
 						description:
-							'ID of the product to which the ticket is associated. It will be ignored if the email_config_id attribute is set in the request. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							'ID of the product to which the ticket is associated. It will be ignored if the email_config_id attribute is set in the request. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 					{
 						displayName: 'Subject',
@@ -606,7 +611,7 @@ export class Freshdesk implements INodeType {
 							loadOptionsMethod: 'getAgents',
 						},
 						description:
-							'ID of the agent to whom the ticket has been assigned. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							'ID of the agent to whom the ticket has been assigned. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 					{
 						displayName: 'CC Emails',
@@ -625,7 +630,7 @@ export class Freshdesk implements INodeType {
 							loadOptionsMethod: 'getCompanies',
 						},
 						description:
-							'Company ID of the requester. This attribute can only be set if the Multiple Companies feature is enabled (Estate plan and above). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							'Company ID of the requester. This attribute can only be set if the Multiple Companies feature is enabled (Estate plan and above). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 					{
 						displayName: 'Due By',
@@ -658,7 +663,7 @@ export class Freshdesk implements INodeType {
 							loadOptionsMethod: 'getGroups',
 						},
 						description:
-							'ID of the group to which the ticket has been assigned. The default value is the ID of the group that is associated with the given email_config_id. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							'ID of the group to which the ticket has been assigned. The default value is the ID of the group that is associated with the given email_config_id. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 					{
 						displayName: 'Name',
@@ -677,13 +682,12 @@ export class Freshdesk implements INodeType {
 							loadOptionsMethod: 'getProducts',
 						},
 						description:
-							'ID of the product to which the ticket is associated. It will be ignored if the email_config_id attribute is set in the request. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+							'ID of the product to which the ticket is associated. It will be ignored if the email_config_id attribute is set in the request. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 					},
 					{
 						displayName: 'Priority',
 						name: 'priority',
 						type: 'options',
-						required: true,
 						options: [
 							{
 								name: 'Low',
@@ -759,7 +763,6 @@ export class Freshdesk implements INodeType {
 						displayName: 'Status',
 						name: 'status',
 						type: 'options',
-						required: true,
 						options: [
 							{
 								name: 'Open',
@@ -905,7 +908,7 @@ export class Freshdesk implements INodeType {
 				displayName: 'Options',
 				name: 'options',
 				type: 'collection',
-				placeholder: 'Add Option',
+				placeholder: 'Add option',
 				default: {},
 				displayOptions: {
 					show: {
@@ -1023,7 +1026,7 @@ export class Freshdesk implements INodeType {
 
 	methods = {
 		loadOptions: {
-			// Get all the agents to display them to user so that he can
+			// Get all the agents to display them to user so that they can
 			// select them easily
 			async getAgents(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const returnData: INodePropertyOptions[] = [];
@@ -1040,7 +1043,7 @@ export class Freshdesk implements INodeType {
 				return returnData;
 			},
 
-			// Get all the groups to display them to user so that he can
+			// Get all the groups to display them to user so that they can
 			// select them easily
 			async getGroups(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const returnData: INodePropertyOptions[] = [];
@@ -1057,7 +1060,7 @@ export class Freshdesk implements INodeType {
 				return returnData;
 			},
 
-			// Get all the products to display them to user so that he can
+			// Get all the products to display them to user so that they can
 			// select them easily
 			async getProducts(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const returnData: INodePropertyOptions[] = [];
@@ -1074,7 +1077,7 @@ export class Freshdesk implements INodeType {
 				return returnData;
 			},
 
-			// Get all the companies to display them to user so that he can
+			// Get all the companies to display them to user so that they can
 			// select them easily
 			async getCompanies(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const returnData: INodePropertyOptions[] = [];
@@ -1095,11 +1098,11 @@ export class Freshdesk implements INodeType {
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
-		const returnData: IDataObject[] = [];
+		const returnData: INodeExecutionData[] = [];
 		let responseData;
 		const qs: IDataObject = {};
-		const resource = this.getNodeParameter('resource', 0) as string;
-		const operation = this.getNodeParameter('operation', 0) as string;
+		const resource = this.getNodeParameter('resource', 0);
+		const operation = this.getNodeParameter('operation', 0);
 		for (let i = 0; i < items.length; i++) {
 			try {
 				if (resource === 'ticket') {
@@ -1110,15 +1113,12 @@ export class Freshdesk implements INodeType {
 						const status = this.getNodeParameter('status', i) as string;
 						const priority = this.getNodeParameter('priority', i) as string;
 						const source = this.getNodeParameter('source', i) as string;
-						const options = this.getNodeParameter('options', i) as IDataObject;
+						const options = this.getNodeParameter('options', i);
 						//const jsonActive = this.getNodeParameter('jsonParameters') as boolean;
 						const body: ICreateTicketBody = {
-							// @ts-ignore
-							status: Status[capitalize(status)],
-							// @ts-ignore
-							priority: Priority[capitalize(priority)],
-							// @ts-ignore
-							source: Source[capitalize(source)],
+							status: Status[capitalize(status) as StatusKey],
+							priority: Priority[capitalize(priority) as PriorityKey],
+							source: Source[capitalize(source) as SourceKey],
 						};
 
 						if (requester === 'requesterId') {
@@ -1203,29 +1203,28 @@ export class Freshdesk implements INodeType {
 					//https://developers.freshdesk.com/api/#update_ticket
 					if (operation === 'update') {
 						const ticketId = this.getNodeParameter('ticketId', i) as string;
-						const updateFields = this.getNodeParameter('updateFields', i) as IDataObject;
+						const updateFields = this.getNodeParameter('updateFields', i);
 						const body: ICreateTicketBody = {};
 
 						if (updateFields.requester) {
 							const value = updateFields.requesterIdentificationValue as string;
 							if (updateFields.requester === 'requesterId') {
-								// @ts-ignore
 								if (isNaN(parseInt(value, 10))) {
 									throw new NodeOperationError(this.getNode(), 'Requester Id must be a number', {
 										itemIndex: i,
 									});
 								}
-								body.requester_id = parseInt(value as string, 10);
+								body.requester_id = parseInt(value, 10);
 							} else if (updateFields.requester === 'email') {
-								body.email = value as string;
+								body.email = value;
 							} else if (updateFields.requester === 'facebookId') {
-								body.facebook_id = value as string;
+								body.facebook_id = value;
 							} else if (updateFields.requester === 'phone') {
-								body.phone = value as string;
+								body.phone = value;
 							} else if (updateFields.requester === 'twitterId') {
-								body.twitter_id = value as string;
+								body.twitter_id = value;
 							} else if (updateFields.requester === 'uniqueExternalId') {
-								body.unique_external_id = value as string;
+								body.unique_external_id = value;
 							}
 						}
 						if (updateFields.status) {
@@ -1287,8 +1286,8 @@ export class Freshdesk implements INodeType {
 					}
 					//https://developers.freshdesk.com/api/#list_all_tickets
 					if (operation === 'getAll') {
-						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
-						const options = this.getNodeParameter('options', i) as IDataObject;
+						const returnAll = this.getNodeParameter('returnAll', i);
+						const options = this.getNodeParameter('options', i);
 						if (options.requesterId) {
 							qs.requester_id = options.requesterId as string;
 						}
@@ -1312,7 +1311,7 @@ export class Freshdesk implements INodeType {
 								qs.include = (options.include as string[]).join(',');
 							}
 						}
-						if (returnAll === true) {
+						if (returnAll) {
 							responseData = await freshdeskApiRequestAllItems.call(
 								this,
 								'GET',
@@ -1321,7 +1320,7 @@ export class Freshdesk implements INodeType {
 								qs,
 							);
 						} else {
-							qs.per_page = this.getNodeParameter('limit', i) as number;
+							qs.per_page = this.getNodeParameter('limit', i);
 							responseData = await freshdeskApiRequest.call(this, 'GET', '/tickets', {}, qs);
 						}
 					}
@@ -1335,11 +1334,7 @@ export class Freshdesk implements INodeType {
 					if (operation === 'create') {
 						const name = this.getNodeParameter('name', i) as string;
 						const email = this.getNodeParameter('email', i) as string;
-						const additionalFields = this.getNodeParameter(
-							'additionalFields',
-							i,
-							{},
-						) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i, {});
 
 						if (additionalFields.customFields) {
 							const metadata = (additionalFields.customFields as IDataObject)
@@ -1377,16 +1372,12 @@ export class Freshdesk implements INodeType {
 						);
 						//https://developers.freshdesk.com/api/#list_all_contacts
 					} else if (operation === 'getAll') {
-						const qs = this.getNodeParameter('filters', i, {}) as IDataObject;
-						responseData = await freshdeskApiRequest.call(this, 'GET', '/contacts', {}, qs);
+						const filters = this.getNodeParameter('filters', i, {});
+						responseData = await freshdeskApiRequest.call(this, 'GET', '/contacts', {}, filters);
 						//https://developers.freshdesk.com/api/#update_contact
 					} else if (operation === 'update') {
 						const contactId = this.getNodeParameter('contactId', i) as string;
-						const additionalFields = this.getNodeParameter(
-							'additionalFields',
-							i,
-							{},
-						) as IDataObject;
+						const additionalFields = this.getNodeParameter('additionalFields', i, {});
 
 						if (additionalFields.customFields) {
 							const metadata = (additionalFields.customFields as IDataObject)
@@ -1409,25 +1400,29 @@ export class Freshdesk implements INodeType {
 					}
 				}
 
-				if (Array.isArray(responseData)) {
-					returnData.push.apply(returnData, responseData as IDataObject[]);
-				} else {
-					if (responseData === undefined) {
-						responseData = {
-							success: true,
-						};
-					}
-
-					returnData.push(responseData as IDataObject);
+				if (!Array.isArray(responseData) && responseData === undefined) {
+					responseData = {
+						success: true,
+					};
 				}
+
+				const executionData = this.helpers.constructExecutionMetaData(
+					this.helpers.returnJsonArray(responseData as IDataObject[]),
+					{ itemData: { item: i } },
+				);
+				returnData.push(...executionData);
 			} catch (error) {
 				if (this.continueOnFail()) {
-					returnData.push({ error: error.message });
+					const executionErrorData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray({ error: error.message }),
+						{ itemData: { item: i } },
+					);
+					returnData.push(...executionErrorData);
 					continue;
 				}
 				throw error;
 			}
 		}
-		return [this.helpers.returnJsonArray(returnData)];
+		return [returnData];
 	}
 }

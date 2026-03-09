@@ -1,5 +1,5 @@
-import { IExecuteFunctions } from 'n8n-core';
-import {
+import type {
+	IExecuteFunctions,
 	IDataObject,
 	ILoadOptionsFunctions,
 	INodeExecutionData,
@@ -7,11 +7,11 @@ import {
 	INodeType,
 	INodeTypeDescription,
 	JsonObject,
-	NodeApiError,
-	NodeOperationError,
 } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeApiError } from 'n8n-workflow';
 
 import { awsApiRequestREST } from './GenericFunctions';
+import { awsNodeAuthOptions, awsNodeCredentials } from './utils';
 
 export class AwsLambda implements INodeType {
 	description: INodeTypeDescription = {
@@ -25,15 +25,12 @@ export class AwsLambda implements INodeType {
 		defaults: {
 			name: 'AWS Lambda',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
-		credentials: [
-			{
-				name: 'aws',
-				required: true,
-			},
-		],
+		usableAsTool: true,
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
+		credentials: awsNodeCredentials,
 		properties: [
+			awsNodeAuthOptions,
 			{
 				displayName: 'Operation',
 				name: 'operation',
@@ -65,7 +62,7 @@ export class AwsLambda implements INodeType {
 				default: '',
 				required: true,
 				description:
-					'The function you want to invoke. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+					'The function you want to invoke. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
 				displayName: 'Qualifier',
@@ -115,9 +112,6 @@ export class AwsLambda implements INodeType {
 				},
 				default: '',
 				description: 'The JSON that you want to provide to your Lambda function as input',
-				typeOptions: {
-					alwaysOpenEditWindow: true,
-				},
 			},
 		],
 	};
@@ -190,22 +184,30 @@ export class AwsLambda implements INodeType {
 					},
 				);
 
-				if (responseData !== null && responseData?.errorMessage !== undefined) {
-					let errorMessage = responseData.errorMessage;
+				if (responseData?.errorMessage !== undefined) {
+					let _errorMessage = responseData.errorMessage;
 
 					if (responseData.stackTrace) {
-						errorMessage += `\n\nStack trace:\n${responseData.stackTrace}`;
+						_errorMessage += `\n\nStack trace:\n${responseData.stackTrace}`;
 					}
 
-					throw new NodeApiError(this.getNode(), responseData);
+					throw new NodeApiError(this.getNode(), responseData as JsonObject);
 				} else {
-					returnData.push({
-						result: responseData,
-					} as IDataObject);
+					const executionData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray({
+							result: responseData,
+						}),
+						{ itemData: { item: i } },
+					);
+					returnData.push(...executionData);
 				}
 			} catch (error) {
 				if (this.continueOnFail()) {
-					returnData.push({ error: (error as JsonObject).message });
+					const executionData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray({ error: (error as JsonObject).message }),
+						{ itemData: { item: i } },
+					);
+					returnData.push(...executionData);
 					continue;
 				}
 				throw error;

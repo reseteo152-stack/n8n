@@ -1,4 +1,4 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 export const controlOperations: INodeProperties[] = [
 	{
@@ -19,10 +19,10 @@ export const controlOperations: INodeProperties[] = [
 				action: 'Get a control',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get all controls',
-				action: 'Get all controls',
+				description: 'Get many controls',
+				action: 'Get many controls',
 			},
 		],
 		default: 'get',
@@ -49,7 +49,7 @@ export const controlFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'ID of the doc. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+			'ID of the doc. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 	},
 	{
 		displayName: 'Control ID',
@@ -84,7 +84,7 @@ export const controlFields: INodeProperties[] = [
 			},
 		},
 		description:
-			'ID of the doc. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code-examples/expressions/">expression</a>.',
+			'ID of the doc. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 	},
 	{
 		displayName: 'Return All',

@@ -1,7 +1,6 @@
-import { INodeProperties } from 'n8n-workflow';
+import type { INodeProperties } from 'n8n-workflow';
 
 import { allCurrencies } from './currencies';
-
 import { activeCampaignDefaultGetAllProperties } from './GenericFunctions';
 
 export const dealOperations: INodeProperties[] = [
@@ -41,10 +40,10 @@ export const dealOperations: INodeProperties[] = [
 				action: 'Get a deal',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get data of all deals',
-				action: 'Get all deals',
+				description: 'Get data of many deals',
+				action: 'Get many deals',
 			},
 			{
 				name: 'Update',
